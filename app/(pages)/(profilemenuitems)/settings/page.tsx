@@ -1,5 +1,5 @@
 
-import { AvatarIcon } from '@radix-ui/react-icons'
+import { Avatar } from '@/components/ui/avatar'
 import { Camera } from 'lucide-react'
 
 export default function Settings() {
@@ -69,7 +69,7 @@ export default function Settings() {
               </label>
               <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
                 <div className="text-center">
-                  <AvatarIcon className="mx-auto h-12 w-12 text-gray-300" aria-hidden="true" />
+                  <Avatar className="mx-auto h-12 w-12 text-gray-300" aria-hidden="true" />
                   <div className="mt-4 flex text-sm leading-6 ">
                     <label
                       htmlFor="file-upload"
