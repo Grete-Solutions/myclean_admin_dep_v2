@@ -58,7 +58,7 @@ type UserData = {
   action: React.ReactNode;
 };
 
-export const columns: ColumnDef<UserData>[] = [
+ const columns: ColumnDef<UserData>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -161,7 +161,7 @@ export const columns: ColumnDef<UserData>[] = [
 ];
 
 
-export function UsersDataTable({ data }: { data: UserData[] }) {
+function UsersDataTable({ data }: { data: UserData[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})

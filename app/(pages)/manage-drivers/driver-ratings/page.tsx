@@ -57,7 +57,7 @@ interface ApprovedData {
   action: React.ReactNode;
 }
 
-export const columns: ColumnDef<ApprovedData>[] = [
+ const columns: ColumnDef<ApprovedData>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -160,7 +160,7 @@ export const columns: ColumnDef<ApprovedData>[] = [
 ];
 
 
-export function CoffeeBeansDataTable({ data }: { data: ApprovedData[] }) {
+function CoffeeBeansDataTable({ data }: { data: ApprovedData[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})

@@ -61,7 +61,7 @@ export type CoffeeBean = {
     productId: string;
   };
 };
-export const columns: ColumnDef<CoffeeBean>[] = [
+ const columns: ColumnDef<CoffeeBean>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -222,7 +222,7 @@ export const columns: ColumnDef<CoffeeBean>[] = [
 ];
 
 
-export function CoffeeBeansDataTable({ data }: { data: CoffeeBean[] }) {
+function CoffeeBeansDataTable({ data }: { data: CoffeeBean[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})

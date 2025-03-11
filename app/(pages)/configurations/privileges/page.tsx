@@ -65,7 +65,7 @@ interface Data {
   };
 }
 
-export const columns: ColumnDef<Data>[] = [
+ const columns: ColumnDef<Data>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -158,7 +158,7 @@ export const columns: ColumnDef<Data>[] = [
     },
   },
 ];
-export function CoffeeBeansDataTable({ data }: { data: Data[] }) {
+function CoffeeBeansDataTable({ data }: { data: Data[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
