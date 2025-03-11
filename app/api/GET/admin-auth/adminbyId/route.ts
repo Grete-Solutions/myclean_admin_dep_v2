@@ -17,7 +17,7 @@ export async function GET(req: NextRequestWithAuth,request: Request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
 
-  const res = await fetch(`${process.env.URL}/admin/get?id=${id}`, {
+  const res = await fetch(`${process.env.URLB}/admin/get?id=${id}`, {
     cache: 'no-cache',
     headers: {
       'Content-Type': 'application/json',

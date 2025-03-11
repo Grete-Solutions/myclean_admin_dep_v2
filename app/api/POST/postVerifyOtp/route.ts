@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     console.log('OTP:', otp);
 
     // Make the OTP verification request to your backend
-    const response = await fetch(`${process.env.URL}/admin/auth/verify-otp`, {
+    const response = await fetch(`${process.env.URLB}/admin/auth/verify-otp`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

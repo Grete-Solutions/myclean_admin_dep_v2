@@ -14,7 +14,7 @@ export async function GET(req: NextRequestWithAuth) {
   }
   
 
-  const res = await fetch(`${process.env.URL}/coupons/get?limit=500&from=2024-01-01"`, {
+  const res = await fetch(`${process.env.URLB}/coupons/get?limit=500&from=2024-01-01"`, {
     cache: 'no-cache',
     headers: {
       'Content-Type': 'application/json',

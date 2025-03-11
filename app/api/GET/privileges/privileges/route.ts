@@ -14,7 +14,7 @@ export async function GET(req: NextRequestWithAuth) {
   }
   
 
-  const res = await fetch(`${process.env.URL}/privileges/get?id=`, {
+  const res = await fetch(`${process.env.URLB}/privileges/get?id=`, {
     cache: 'no-cache',
     headers: {
       'Content-Type': 'application/json',

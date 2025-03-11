@@ -15,7 +15,7 @@ export async function POST(req: Request) {
         phone,
         city
       } = await req.json();
-      const response = await fetch(`${process.env.URL}/admin/register`, {
+      const response = await fetch(`${process.env.URLB}/admin/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -13,7 +13,7 @@ export async function GET(req: NextRequestWithAuth) {
     return Response.json({ error: 'No token found' }, { status: 401 });
   }
   
-  const res = await fetch(`${process.env.URL}/users/get?status=approved`, {
+  const res = await fetch(`${process.env.URLB}/users/get?status=approved`, {
     cache: 'no-cache',
     headers: {
       'Content-Type': 'application/json',

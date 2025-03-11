@@ -4,7 +4,7 @@ export async function POST(req: Request) {
   if (req.method === 'POST') {
     try {
       const {email,password} = await req.json();
-      const response = await fetch(`${process.env.URL}/admin/auth/signin`, {
+      const response = await fetch(`${process.env.URLB}/admin/auth/signin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
