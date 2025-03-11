@@ -46,30 +46,40 @@ export async function POST(req: Request) {
         throw new Error(`Firebase auth error: ${firebaseData.error?.message || "Authentication failed"}`);
       }
 
-      // Extract the idToken from firebaseData and include it in the response
-      const { idToken } = firebaseData;
-      console.log("✅ Storing Token:", idToken);
+      // Extract the idToken and refreshToken from firebaseData
+      const { idToken, refreshToken } = firebaseData;
+      console.log("✅ Storing Tokens:", { idToken, refreshToken });
 
-      // ✅ Set HTTP-Only Secure Cookie
-      const responseWithCookie = new NextResponse(
-        JSON.stringify({ success: true, message: "OTP verification successful" }),
-        { status: 200 }
-      );
-  
-      responseWithCookie.headers.append(
-        "Set-Cookie",
-        `authToken=${idToken}`
-      );
-  
-      console.log("✅ Cookie Set in Headers:", responseWithCookie.headers.get("Set-Cookie"));
-  
-      
-      // Return both the original data and the idToken
-      return NextResponse.json({
+      // Create a new response
+      const response = NextResponse.json({
         success: true,
-        idToken,
         message: "OTP verification successful",
-        responseWithCookie      });
+        idToken,
+        refreshToken
+      });
+      
+      // Set HTTP-Only Secure Cookies for both tokens
+      response.cookies.set({
+        name: "authToken",
+        value: idToken,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        path: "/"
+      });
+      
+      response.cookies.set({
+        name: "refreshToken",
+        value: refreshToken,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict", 
+        path: "/"
+      });
+      
+      console.log("✅ Cookies Set:", response.cookies);
+      
+      return response;
     } else {
       console.log('No custom token found in response');
       return NextResponse.json({
@@ -92,7 +102,5 @@ export async function POST(req: Request) {
         error: 'An unknown error occurred' 
       }, { status: 500 });
     }
-    
   }
-  
 }

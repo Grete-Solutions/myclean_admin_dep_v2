@@ -1,8 +1,10 @@
-import { cookies } from "next/headers";
+import { getToken } from 'next-auth/jwt';
+import { NextRequestWithAuth } from 'next-auth/middleware';
 
-export async function GET(){
-  const cookieStore =await cookies();
-  const token = cookieStore.get('idToken')?.value;
+export async function GET(req: NextRequestWithAuth) {
+  const tokeninfo = await getToken({ req });
+
+  const token = tokeninfo?.idToken;
   
   console.log('Token:', token);
   
@@ -10,17 +12,14 @@ export async function GET(){
     return Response.json({ error: 'No token found' }, { status: 401 });
   }
   
-    const res = await fetch(`${process.env.URL}/users/get?status=approved`, {
-      cache: 'no-cache',  
-      headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-
-        },
-    });
+  const res = await fetch(`${process.env.URL}/users/get?status=deleted`, {
+    cache: 'no-cache',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
   
-    const product = await res.json();
-  
-    return Response.json( product );
-  }
-  
+  const data = await res.json();
+  return Response.json(data);
+}

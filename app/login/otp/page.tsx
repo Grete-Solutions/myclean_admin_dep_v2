@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { toast } from "sonner";
 import { useDispatch } from 'react-redux';
-import { setToken } from '@/utils/tokenSlice';
+import { setToken, setRefreshToken } from '@/utils/tokenSlice'; // Updated import
 import { signIn } from 'next-auth/react';
 
 const OtpPage = () => {
@@ -51,30 +51,37 @@ const OtpPage = () => {
         throw new Error('Login session expired. Please try again.');
       }
       
-      // Get the idToken from the OTP verification response
+      // Get the idToken and refreshToken from the OTP verification response
       const idToken = otpData.idToken;
+      const refreshToken = otpData.refreshToken;
       
-      if (!idToken) {
-        throw new Error('Authentication token not received');
+      if (!idToken || !refreshToken) {
+        throw new Error('Authentication tokens not received');
       }
       
-      // Store token in Redux and localStorage
+      // Store tokens in Redux
       dispatch(setToken(idToken));
-      localStorage.setItem('authToken', idToken);
+      dispatch(setRefreshToken(refreshToken));
       
-      // Now we call NextAuth signIn with all required credentials including the idToken
+      // Store tokens in localStorage
+      localStorage.setItem('authToken', idToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      
+      // Now we call NextAuth signIn with all required credentials including the tokens
       const result = await signIn('credentials', {
         redirect: false,
         email,
         password,
         otp: Otp.join(''),
         idToken, // Pass the idToken to NextAuth
+        refreshToken, // Pass the refreshToken to NextAuth
       });
 
       console.log('Items',  
         email,
         password,
         idToken,
+        refreshToken
       )
       
       if (result?.error) {

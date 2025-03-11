@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import {  ChevronDown, MoreHorizontal } from "lucide-react"
+import { ChevronDown, MoreHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -36,7 +36,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
-// Define the coffee bean data type based on Prisma schema
+// Define the admin data type
 interface AdminData {
   id: string;
   country: string;
@@ -61,7 +61,9 @@ interface AdminData {
     _nanoseconds: number;
   };
 }
-export const columns: ColumnDef<AdminData>[] = [
+
+// This is now internal to the file instead of exported
+const columns: ColumnDef<AdminData>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -169,7 +171,9 @@ export const columns: ColumnDef<AdminData>[] = [
     },
   },
 ];
-export function AdminDataTable({ data }: { data: AdminData[] }) {
+
+// This component is now internal to the file instead of exported
+function AdminDataTable({ data }: { data: AdminData[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -269,7 +273,7 @@ export function AdminDataTable({ data }: { data: AdminData[] }) {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No coffee beans found.
+                  No results found.
                 </TableCell>
               </TableRow>
             )}
@@ -304,47 +308,43 @@ export function AdminDataTable({ data }: { data: AdminData[] }) {
   )
 }
 
-// Example page component that uses the AdminDataTable
-export default function AdminPage() {
+// Only export the main page component
+export default function Page() {
   const [admin, setAdmins] = React.useState<AdminData[]>([]);
   const [loading, setLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
 
-    const fetchAdmins = async () => {
-      try {
-        const response = await fetch("/api/GET/admin-auth/admins");
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status} - ${response.statusText}`);
-        }
-        const data = await response.json();
-        setAdmins(data?.data);
-      } catch (error) {
-        setError((error as Error).message);
-      } finally {
-        setLoading(false);
+  const fetchAdmins = async () => {
+    try {
+      const response = await fetch("/api/GET/admin-auth/admins");
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} - ${response.statusText}`);
       }
-    };  React.useEffect(() => {
-
-
+      const data = await response.json();
+      setAdmins(data?.data);
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  React.useEffect(() => {
     fetchAdmins();
   }, []);
 
   return (
     <div className="container mx-auto py-10">
       <div className="flex items-center justify-between">
-  
-     
-
-
-
+        {/* You can add page title, buttons, etc. here */}
       </div>
       {loading && (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
         </div>
-      )}      {error && <p className="text-center text-red-500">{error}</p>}
+      )}
+      {error && <p className="text-center text-red-500">{error}</p>}
       {!loading && <AdminDataTable data={admin} />}
-
     </div>
   );
 }

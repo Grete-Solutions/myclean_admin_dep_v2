@@ -1,8 +1,13 @@
-import { cookies } from 'next/headers';
+import { getToken } from 'next-auth/jwt';
+import { NextRequestWithAuth } from 'next-auth/middleware';
 
-export async function GET(request:Request) {
-  const cookieStore =await cookies();
-  const token = cookieStore.get('idToken')?.value;
+export async function GET(req: NextRequestWithAuth,request: Request) {
+  const tokeninfo = await getToken({ req });
+
+  const token = tokeninfo?.idToken;
+
+
+
   
   console.log('Token:', token);
   

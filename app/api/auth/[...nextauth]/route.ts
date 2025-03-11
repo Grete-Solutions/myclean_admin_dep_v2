@@ -30,7 +30,8 @@ export const authOptions: NextAuthOptions = {
         const token = credentials.idToken;
         if (!token) {
           console.error("No authentication token provided");
-          throw new Error("No authentication token provided");
+          // This will cause session verification to fail, but won't automatically redirect
+          return null;
         }
 
         try {
@@ -64,7 +65,8 @@ export const authOptions: NextAuthOptions = {
             name: user.name || user.displayName,
             role: user.role,
             displayName: user.displayName,
-          } as User;
+            idToken: token, // Store the token in the user object
+          } as User & { idToken: string };
         } catch (error) {
           console.error("Error during authorization:", error);
           throw new Error("Authentication failed.");
@@ -80,6 +82,7 @@ export const authOptions: NextAuthOptions = {
         token.name = user.name;
         token.role = user.role;
         token.displayName = user.displayName;
+        token.idToken = user.idToken; // Store the token in the JWT
       }
       return token;
     },
@@ -90,6 +93,7 @@ export const authOptions: NextAuthOptions = {
         session.user.name = token.name as string;
         session.user.role = token.role as string;
         session.user.displayName = token.displayName as string;
+        session.idToken = token.idToken as string; // Make the token available in the session
       }
       return session;
     },

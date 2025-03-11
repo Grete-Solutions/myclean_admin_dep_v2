@@ -1,26 +1,25 @@
-import { cookies } from "next/headers";
+import { getToken } from 'next-auth/jwt';
+import { NextRequestWithAuth } from 'next-auth/middleware';
 
-export async function GET(){
-  
-   const cookieStore =await cookies();
-    const token = cookieStore.get('idToken')?.value;
-    
-    console.log('Token:', token);
-    
-    if (!token) {
-      return Response.json({ error: 'No token found' }, { status: 401 });
-    }
-    const res = await fetch(`${process.env.URL}/users/get?status=approved`, {
-      cache: 'no-cache',  
-      headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
+export async function GET(req: NextRequestWithAuth) {
+  const tokeninfo = await getToken({ req });
 
-        },
-    });
+  const token = tokeninfo?.idToken;
   
-    const product = await res.json();
+  console.log('Token:', token);
   
-    return Response.json( product );
+  if (!token) {
+    return Response.json({ error: 'No token found' }, { status: 401 });
   }
   
+  const res = await fetch(`${process.env.URL}/users/get?status=suspended`, {
+    cache: 'no-cache',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  
+  const data = await res.json();
+  return Response.json(data);
+}

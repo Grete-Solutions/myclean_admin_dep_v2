@@ -261,7 +261,7 @@ export function UsersDataTable({ data }: { data: UserData[] }) {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No coffee beans found.
+                  No data found.
                 </TableCell>
               </TableRow>
             )}

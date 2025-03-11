@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react"
+import { ArrowUpDown, ChevronDown, MoreHorizontal, MapPin } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -37,31 +37,22 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 
-// Define the coffee bean data type based on Prisma schema
-export type CoffeeBean = {
-  id: string;
-  name: string;
-  description: string;
-  price: number; // Convert from string in API response
-  stock: number;
-  image: string | null;
-  images: string[];
-  category: "COFFEE_BEAN";
-  createdAt: Date;
-  updatedAt: Date;
-  isActive: boolean;
-  coffeeBeanDetails: {
-    id: string;
-    origin: string;
-    roastLevel: "LIGHT" | "MEDIUM" | "MEDIUM_DARK" | "DARK";
-    flavorNotes: string[];
-    processMethod: string;
-    weightGrams: number;
-    availableGrinds: string[];
-    productId: string;
-  };
+// Define the service location data type based on the provided structure
+type Coordinate = {
+  _latitude: number;
+  _longitude: number;
 };
-export const columns: ColumnDef<CoffeeBean>[] = [
+
+type ServiceLocation = {
+  city: string;
+  price: number;
+  isActive: boolean;
+  countryISOCode: string;
+  commission: number | null;
+  coordinates?: Coordinate  
+};
+
+const columns: ColumnDef<ServiceLocation>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -85,75 +76,26 @@ export const columns: ColumnDef<CoffeeBean>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "name",
-    header: "Name",
-    cell: ({ row }) => <div className="font-medium">{row.original.name}</div>,
-  },
-  {
-    accessorKey: "coffeeBeanDetails.origin",
+    accessorKey: "city",
     header: ({ column }) => (
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Origin
+        City
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    cell: ({ row }) => <div>{row.original.coffeeBeanDetails.origin}</div>,
+    cell: ({ row }) => <div className="font-medium">{row.original.city}</div>,
   },
   {
-    accessorKey: "coffeeBeanDetails.roastLevel",
-    header: "Roast Level",
-    cell: ({ row }) => {
-      const roastLevel = row.original.coffeeBeanDetails.roastLevel;
-      return (
-        <Badge
-          variant={
-            roastLevel === "LIGHT"
-              ? "outline"
-              : roastLevel === "MEDIUM"
-              ? "secondary"
-              : roastLevel === "MEDIUM_DARK"
-              ? "default"
-              : "destructive"
-          }
-        >
-          {roastLevel.replace("_", " ")}
-        </Badge>
-      );
-    },
-  },
-  {
-    accessorKey: "coffeeBeanDetails.flavorNotes",
-    header: "Flavor Notes",
-    cell: ({ row }) => {
-      const flavorNotes = row.original.coffeeBeanDetails.flavorNotes;
-      return (
-        <div className="flex flex-wrap gap-1">
-          {flavorNotes.slice(0, 3).map((note, i) => (
-            <Badge key={i} variant="outline" className="text-xs">
-              {note}
-            </Badge>
-          ))}
-          {flavorNotes.length > 3 && (
-            <Badge variant="outline" className="text-xs">
-              +{flavorNotes.length - 3} more
-            </Badge>
-          )}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "coffeeBeanDetails.processMethod",
-    header: "Process",
-    cell: ({ row }) => <div>{row.original.coffeeBeanDetails.processMethod}</div>,
-  },
-  {
-    accessorKey: "coffeeBeanDetails.weightGrams",
-    header: "Weight (g)",
-    cell: ({ row }) => <div>{row.original.coffeeBeanDetails.weightGrams}</div>,
+    accessorKey: "countryISOCode",
+    header: "Country",
+    cell: ({ row }) => (
+      <Badge variant="outline" className="uppercase">
+        {row.original.countryISOCode}
+      </Badge>
+    ),
   },
   {
     accessorKey: "price",
@@ -167,7 +109,7 @@ export const columns: ColumnDef<CoffeeBean>[] = [
       </Button>
     ),
     cell: ({ row }) => {
-      const price = parseFloat(row.original.price.toString());
+      const price = row.original.price;
       const formatted = new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "USD",
@@ -176,26 +118,68 @@ export const columns: ColumnDef<CoffeeBean>[] = [
     },
   },
   {
-    accessorKey: "stock",
-    header: "Stock",
+    accessorKey: "commission",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Commission
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: ({ row }) => {
-      const stock = row.original.stock;
-      return <div className={stock <= 10 ? "text-red-500 font-medium" : ""}>{stock}</div>;
+      const commission = row.original.commission;
+      return <div className="text-right">{commission !== null ? `${commission}%` : "N/A"}</div>;
+    },
+  },
+  {
+    accessorKey: "coordinates",
+    header: "Coordinates",
+    cell: ({ row }) => {
+      const coordinates = row.original.coordinates;
+      
+      if (!coordinates) {
+        return <div className="text-muted">No coordinates</div>;
+      }
+      
+      // Extract latitude and longitude based on data format
+      let lat, lng;
+      
+      if (Array.isArray(coordinates)) {
+        // If coordinates is an array [lat, lng]
+        [lat, lng] = coordinates;
+      } else if (typeof coordinates === 'object' && '_latitude' in coordinates && '_longitude' in coordinates) {
+        // If coordinates is an object with _latitude and _longitude properties
+        lat = coordinates._latitude;
+        lng = coordinates._longitude;
+      } else {
+        return <div className="text-muted">Invalid coordinates format</div>;
+      }
+      
+      return (
+        <div className="flex items-center">
+          <MapPin className="h-4 w-4 mr-2 text-gray-500" />
+          <span>{typeof lat === 'number' ? lat.toFixed(4) : lat}, {typeof lng === 'number' ? lng.toFixed(4) : lng}</span>
+        </div>
+      );
     },
   },
   {
     accessorKey: "isActive",
     header: "Status",
     cell: ({ row }) => (
-      <div className={row.original.isActive ? "text-green-500" : "text-red-500"}>
-        {row.original.isActive ? "Active" : "Inactive"}
+      <div>
+        <Badge variant={row.original.isActive ? "default" : "destructive"}>
+          {row.original.isActive ? "Active" : "Inactive"}
+        </Badge>
       </div>
     ),
   },
   {
     id: "actions",
     cell: ({ row }) => {
-      const bean = row.original;
+      const location = row.original;
 
       return (
         <DropdownMenu>
@@ -207,13 +191,17 @@ export const columns: ColumnDef<CoffeeBean>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(bean.id)}>
-              Copy ID
+            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(location.city)}>
+              Copy City
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>View details</DropdownMenuItem>
-            <DropdownMenuItem>Update stock</DropdownMenuItem>
-            <DropdownMenuItem>Edit bean</DropdownMenuItem>
+            <DropdownMenuItem>Edit location</DropdownMenuItem>
+            <DropdownMenuItem>View on map</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className={location.isActive ? "text-red-600" : "text-green-600"}>
+              {location.isActive ? "Deactivate" : "Activate"}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -221,8 +209,7 @@ export const columns: ColumnDef<CoffeeBean>[] = [
   },
 ];
 
-
-export function CoffeeBeansDataTable({ data }: { data: CoffeeBean[] }) {
+function ServiceLocationsDataTable({ data }: { data: ServiceLocation[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -251,10 +238,10 @@ export function CoffeeBeansDataTable({ data }: { data: CoffeeBean[] }) {
     <div className="w-full">
       <div className="flex items-center py-4">
         <Input
-          placeholder="Filter by name..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          placeholder="Filter by city..."
+          value={(table.getColumn("city")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
+            table.getColumn("city")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -322,7 +309,7 @@ export function CoffeeBeansDataTable({ data }: { data: CoffeeBean[] }) {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No coffee beans found.
+                  No service locations found.
                 </TableCell>
               </TableRow>
             )}
@@ -357,48 +344,47 @@ export function CoffeeBeansDataTable({ data }: { data: CoffeeBean[] }) {
   )
 }
 
-// Example page component that uses the CoffeeBeansDataTable
-export default function CoffeeBeansPage() {
-  const [coffeeBeans, setCoffeeBeans] = React.useState<CoffeeBean[]>([]);
+// Example page component that uses the ServiceLocationsDataTable
+export default function ServiceLocationsPage() {
+  const [locations, setLocations] = React.useState<ServiceLocation[]>([]);
   const [loading, setLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
 
-    const fetchBeans = async () => {
-      try {
-        const response = await fetch("/api/GET/getBeans");
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status} - ${response.statusText}`);
-        }
-        const data: CoffeeBean[] = await response.json();
-        setCoffeeBeans(data);
-      } catch (error) {
-        setError((error as Error).message);
-      } finally {
-        setLoading(false);
+  const fetchLocations = async () => {
+    try {
+      const response = await fetch("/api/GET/locations/locations");
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} - ${response.statusText}`);
       }
-    };  React.useEffect(() => {
-
-
-    fetchBeans();
+      const data = await response.json();
+      setLocations(data.data);
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  React.useEffect(() => {
+    fetchLocations();
   }, []);
 
   return (
     <div className="container mx-auto py-10">
-      <div className="flex items-center justify-between">
-   
-
-     
-
-
-
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Service Locations</h1>
+        <Button>Add New Location</Button>
       </div>
+      
       {loading && (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
         </div>
-      )}      {error && <p className="text-center text-red-500">{error}</p>}
-      {!loading && <CoffeeBeansDataTable data={coffeeBeans} />}
-
+      )}
+      
+      {error && <p className="text-center text-red-500">{error}</p>}
+      
+      {!loading && <ServiceLocationsDataTable data={locations} />}
     </div>
   );
 }

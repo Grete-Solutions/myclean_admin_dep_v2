@@ -12,7 +12,7 @@ export async function POST(req: Request) {
         body: JSON.stringify({email,password}),
       });
       const data = await response.json();
-      return NextResponse.json(data);
+      return NextResponse.json(data.data);
     } catch (error) {
       if (error instanceof Error) {
         console.error(error.message);

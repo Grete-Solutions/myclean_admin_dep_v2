@@ -1,33 +1,31 @@
-// src/redux/features/tokenSlice.ts
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { RootState } from './store'; // You'll create this type
+import { createSlice } from '@reduxjs/toolkit';
+import { RootState } from './store';
 
-// Define the state type
-interface TokenState {
-  idToken: string | null;
-}
-
-// Define the initial state with the correct type
-const initialState: TokenState = {
-  idToken: null
+const initialState = {
+  token: null,
+  refreshToken: null,
 };
 
 const tokenSlice = createSlice({
   name: 'token',
   initialState,
   reducers: {
-    setToken: (state: TokenState, action: PayloadAction<string>) => {
-      state.idToken = action.payload;
+    setToken: (state, action) => {
+      state.token = action.payload;
     },
-    clearToken: (state: TokenState) => {
-      state.idToken = null;
-    }
-  }
+    setRefreshToken: (state, action) => {
+      state.refreshToken = action.payload;
+    },
+    clearTokens: (state) => {
+      state.token = null;
+      state.refreshToken = null;
+    },
+  },
 });
 
-export const { setToken, clearToken } = tokenSlice.actions;
+// Export selectors
+export const selectIdToken = (state: RootState) => state.token.token;
+export const selectRefreshToken = (state: RootState) => state.token.refreshToken;
 
-// Typed selector
-export const selectIdToken = (state: RootState) => state.token.idToken;
-
+export const { setToken, setRefreshToken, clearTokens } = tokenSlice.actions;
 export default tokenSlice.reducer;

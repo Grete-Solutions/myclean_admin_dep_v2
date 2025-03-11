@@ -261,7 +261,7 @@ export function UsersDataTable({ data }: { data: UserData[] }) {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No coffee beans found.
+                  No data found.
                 </TableCell>
               </TableRow>
             )}
@@ -309,7 +309,7 @@ export default function UserDatasPage() {
           throw new Error(`Error: ${response.status} - ${response.statusText}`);
         }
         const data: UserData[] = await response.json();
-        setUserDatas(data);
+        setUserDatas(data.data);
       } catch (error) {
         setError((error as Error).message);
       } finally {

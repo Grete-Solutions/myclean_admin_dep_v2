@@ -38,7 +38,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 
 // Define the coffee bean data type based on Prisma schema
-export type CoffeeBean = {
+ type CoffeeBean = {
   id: string;
   name: string;
   description: string;
@@ -61,7 +61,7 @@ export type CoffeeBean = {
     productId: string;
   };
 };
-export const columns: ColumnDef<CoffeeBean>[] = [
+ const columns: ColumnDef<CoffeeBean>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -222,7 +222,7 @@ export const columns: ColumnDef<CoffeeBean>[] = [
 ];
 
 
-export function CoffeeBeansDataTable({ data }: { data: CoffeeBean[] }) {
+ function CoffeeBeansDataTable({ data }: { data: CoffeeBean[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -322,7 +322,7 @@ export function CoffeeBeansDataTable({ data }: { data: CoffeeBean[] }) {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No coffee beans found.
+                  No data found.
                 </TableCell>
               </TableRow>
             )}
@@ -369,8 +369,8 @@ export default function CoffeeBeansPage() {
         if (!response.ok) {
           throw new Error(`Error: ${response.status} - ${response.statusText}`);
         }
-        const data: CoffeeBean[] = await response.json();
-        setCoffeeBeans(data);
+        const data= await response.json();
+        setCoffeeBeans(data.data);
       } catch (error) {
         setError((error as Error).message);
       } finally {

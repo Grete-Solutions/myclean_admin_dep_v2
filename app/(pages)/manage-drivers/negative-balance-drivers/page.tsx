@@ -249,7 +249,7 @@ export function CoffeeBeansDataTable({ data }: { data: ApprovedData[] }) {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No coffee beans found.
+                  No data found.
                 </TableCell>
               </TableRow>
             )}
@@ -297,7 +297,7 @@ export default function CoffeeBeansPage() {
           throw new Error(`Error: ${response.status} - ${response.statusText}`);
         }
         const data = await response.json();
-        setCoffeeBeans(data);
+        setCoffeeBeans(data.data);
       } catch (error) {
         setError((error as Error).message);
       } finally {

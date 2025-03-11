@@ -1,16 +1,17 @@
-import { cookies } from 'next/headers';
+import { getToken } from 'next-auth/jwt';
+import { NextRequestWithAuth } from 'next-auth/middleware';
 
-export async function GET() {
-  const cookieStore = await cookies();
+export async function GET(req: NextRequestWithAuth) {
+  const tokeninfo = await getToken({ req });
 
-  const token = cookieStore.get('authToken')?.value;
+  const token = tokeninfo?.idToken;
   console.log('Token:', token); // Log token to check if it exists
 
   if (!token) {
     return Response.json({ error: 'No token found' }, { status: 401 });
   }
 
-  const res = await fetch(`${process.env.URL}/admin/get?from=2024-09-01&to=2025-09-30`, {
+  const res = await fetch(`${process.env.URL}/vehicleMake/get?make=Tundra&model=Truck`, {
     cache: 'no-cache',
     headers: {
       'Content-Type': 'application/json',

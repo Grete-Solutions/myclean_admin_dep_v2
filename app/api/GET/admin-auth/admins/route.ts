@@ -1,12 +1,17 @@
-import { cookies } from 'next/headers';
+import { getToken } from 'next-auth/jwt';
+import { NextRequestWithAuth } from 'next-auth/middleware';
+// import { cookies } from 'next/headers';
 
-export async function GET() {
-  const cookieStore =await cookies();
-  const token = cookieStore.get('idToken')?.value;
+export async function GET(req: NextRequestWithAuth) {
+  const tokeninfo = await getToken({ req });
+
+  const token = tokeninfo?.idToken;
+
+
   
   console.log('Token:', token);
   
-  if (!token) {
+  if (!tokeninfo) {
     return Response.json({ error: 'No token found' }, { status: 401 });
   }
   

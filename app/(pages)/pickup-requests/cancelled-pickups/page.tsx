@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import {  ChevronDown, MoreHorizontal } from "lucide-react"
+import { ArrowUpDown, ChevronDown, MoreHorizontal, MapPin, Phone, Car, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -35,21 +35,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
 
-type Data = {
-  id: string;
-  srNodata: number;
-  isDelete: number;
-  make: string;
-  model: string;
-  year: number;
-  description: string;
-  status: number;
-  capacity: number;
-  action: React.ReactNode;
+// Using the same Pickup type from the original component
+type Pickup = {
+  sorted: boolean;
+  vehicleColor: string;
+  vehicleMake: string;
+  vehicleLicenseNumber: string;
+  driverPhone: string;
+  userPhone: string;
+  isDelete: boolean;
+  status: "pending" | "in-progress" | "completed" | "cancelled";
+  details: string;
+  pickupLocation: {
+    _latitude: number;
+    _longitude: number;
+  };
 };
 
- const columns: ColumnDef<Data>[] = [
+// Modified columns for cancelled pickups with additional cancellation-specific info
+const columns: ColumnDef<Pickup>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -73,43 +79,95 @@ type Data = {
     enableHiding: false,
   },
   {
-    accessorKey: "make",
-    header: "Make",
-    cell: ({ row }) => <div className="font-medium">{row.original.make}</div>,
-  },
-  {
-    accessorKey: "model",
-    header: "Model",
-    cell: ({ row }) => <div>{row.original.model}</div>,
-  },
-  {
-    accessorKey: "year",
-    header: "Year",
-    cell: ({ row }) => <div>{row.original.year}</div>,
-  },
-  {
-    accessorKey: "description",
-    header: "Description",
-    cell: ({ row }) => <div>{row.original.description}</div>,
-  },
-  {
-    accessorKey: "status",
-    header: "Status",
+    accessorKey: "vehicleMake",
+    header: ({ column }) => (
+      <Button
+        variant="ghost"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        Vehicle
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    ),
     cell: ({ row }) => (
-      <div className={row.original.status === 1 ? "text-green-500" : "text-red-500"}>
-        {row.original.status === 1 ? "Active" : "Inactive"}
+      <div className="flex items-center">
+        <Car className="h-4 w-4 mr-2" />
+        <div>
+          <span className="font-medium">{row.original.vehicleMake}</span>
+          <div className="flex items-center text-xs text-muted-foreground">
+            <div 
+              className="h-3 w-3 rounded-full mr-1" 
+              style={{ backgroundColor: row.original.vehicleColor }}
+            ></div>
+            {row.original.vehicleColor}
+          </div>
+        </div>
       </div>
     ),
   },
   {
-    accessorKey: "capacity",
-    header: "Capacity",
-    cell: ({ row }) => <div>{row.original.capacity}</div>,
+    accessorKey: "vehicleLicenseNumber",
+    header: "License Number",
+    cell: ({ row }) => <div>{row.original.vehicleLicenseNumber}</div>,
+  },
+  {
+    accessorKey: "driverPhone",
+    header: "Driver Phone",
+    cell: ({ row }) => (
+      <div className="flex items-center">
+        <Phone className="h-4 w-4 mr-2 text-gray-500" />
+        {row.original.driverPhone}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "userPhone",
+    header: "User Phone",
+    cell: ({ row }) => (
+      <div className="flex items-center">
+        <Phone className="h-4 w-4 mr-2 text-gray-500" />
+        {row.original.userPhone}
+      </div>
+    ),
+  },
+  
+  {
+    accessorKey: "details",
+    header: "Details",
+    cell: ({ row }) => (
+      <div className="max-w-xs truncate" title={row.original.details}>
+        {row.original.details}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "pickupLocation",
+    header: "Pickup Location",
+    cell: ({ row }) => {
+      const { _latitude, _longitude } = row.original.pickupLocation;
+      return (
+        <div className="flex items-center">
+          <MapPin className="h-4 w-4 mr-2 text-gray-500" />
+          <span>{_latitude.toFixed(4)}, {_longitude.toFixed(4)}</span>
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: "status",
+    header: "Cancellation",
+    cell: () => (
+      <Badge variant="destructive" className="flex items-center w-fit">
+        <X className="h-3 w-3 mr-1" />
+        Cancelled
+      </Badge>
+    ),
   },
   {
     id: "actions",
     cell: ({ row }) => {
-      const data = row.original;
+      const pickup = row.original;
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -120,12 +178,19 @@ type Data = {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(data.id)}>
-              Copy ID
+            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(pickup.vehicleLicenseNumber)}>
+              Copy License Number
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>View details</DropdownMenuItem>
-            <DropdownMenuItem>Edit</DropdownMenuItem>
+            <DropdownMenuItem>View on map</DropdownMenuItem>
+            <DropdownMenuItem>Contact driver</DropdownMenuItem>
+            <DropdownMenuItem>Contact user</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-green-600">Restore pickup</DropdownMenuItem>
+            {!pickup.isDelete && (
+              <DropdownMenuItem className="text-red-600">Delete pickup</DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -133,7 +198,7 @@ type Data = {
   },
 ];
 
- function VehicleMakeDataTable({ data }: { data: Data[] }) {
+function CancelledPickupsTable({ data }: { data: Pickup[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -162,10 +227,10 @@ type Data = {
     <div className="w-full">
       <div className="flex items-center py-4">
         <Input
-          placeholder="Filter by name..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          placeholder="Filter by license number..."
+          value={(table.getColumn("vehicleLicenseNumber")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
+            table.getColumn("vehicleLicenseNumber")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -233,7 +298,7 @@ type Data = {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No data found.
+                  No cancelled pickups found.
                 </TableCell>
               </TableRow>
             )}
@@ -268,40 +333,52 @@ type Data = {
   )
 }
 
-// Example page component that uses the VehicleMakeDataTable
-export default function VehicleMake() {
-  const [coffeeBeans, setCoffeeBeans] = React.useState<Data[]>([]);
+// Main component for cancelled pickups page
+export default function CancelledPickupsPage() {
+  const [pickups, setPickups] = React.useState<Pickup[]>([]);
   const [loading, setLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
 
-    const fetchBeans = async () => {
-      try {
-        const response = await fetch("/api/GET/vehicle-make/vehicleMake");
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status} - ${response.statusText}`);
-        }
-        const data = await response.json();
-        setCoffeeBeans(data.data);
-      } catch (error) {
-        setError((error as Error).message);
-      } finally {
-        setLoading(false);
+  const fetchCancelledPickups = async () => {
+    try {
+      const response = await fetch("/api/GET/pickups/cancelledPickups");
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} - ${response.statusText}`);
       }
-    };  React.useEffect(() => {
+      const data = await response.json();
+      setPickups(data.data);
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  React.useEffect(() => {
 
-
-    fetchBeans();
+    setLoading(false);
+        fetchCancelledPickups();
   }, []);
 
   return (
     <div className="container mx-auto py-10">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Cancelled Pickups</h1>
+        <Button variant="outline" className="flex items-center">
+          <X className="mr-2 h-4 w-4" />
+          Export Cancelled Pickups
+        </Button>
+      </div>
+      
       {loading && (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
         </div>
-      )}      {error && <p className="text-center text-red-500">{error}</p>}
-      {!loading && <VehicleMakeDataTable data={coffeeBeans} />}
-
+      )}
+      
+      {error && <p className="text-center text-red-500">{error}</p>}
+      
+      {!loading && <CancelledPickupsTable data={pickups} />}
     </div>
   );
 }

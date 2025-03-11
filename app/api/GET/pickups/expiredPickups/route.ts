@@ -13,15 +13,14 @@ export async function GET(req: NextRequestWithAuth) {
     return Response.json({ error: 'No token found' }, { status: 401 });
   }
   
-  const res = await fetch(`${process.env.URL}/location/get`, {
+  const res = await fetch(`${process.env.URL}/booking/get?status=expired`, {
     cache: 'no-cache',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`, 
+      Authorization: `Bearer ${token}`,
     },
   });
-
-  const product = await res.json();
-  console.log('Product:', product); // Log product to check if it's retrieved successfully
-  return Response.json( product );
+  
+  const data = await res.json();
+  return Response.json(data);
 }

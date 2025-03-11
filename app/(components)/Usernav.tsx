@@ -5,10 +5,7 @@ import Link from "next/link";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export function UserNav() {
-    const { data: session, status } = useSession();
-    
-    console.log('Session Status:', status);
-    console.log('Session Data:', session);
+    const { data: session, } = useSession();
 
     return (
         <DropdownMenu>

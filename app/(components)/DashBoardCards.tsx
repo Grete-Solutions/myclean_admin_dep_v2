@@ -27,7 +27,7 @@ const Header: React.FC = () => {
 
 
 // Main Dashboard Component
-const ShippingDashboard: React.FC = () => {
+const DashboardCard: React.FC = () => {
   return (
     <div className="bg-gray-100 min-h-screen p-6">
       <Header />
@@ -53,4 +53,4 @@ const ShippingDashboard: React.FC = () => {
   );
 };
 
-export default ShippingDashboard;
+export default DashboardCard;

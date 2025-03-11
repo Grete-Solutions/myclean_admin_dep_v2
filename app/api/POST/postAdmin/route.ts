@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       });
 
       const data = await response.json();
-      return NextResponse.json(data);
+      return NextResponse.json(data.data);
     } catch (error) {
       if (error instanceof Error) {
         console.error(error.message);
