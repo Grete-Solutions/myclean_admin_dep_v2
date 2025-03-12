@@ -369,7 +369,7 @@ export default function CoffeeBeansPage() {
         if (!response.ok) {
           throw new Error(`Error: ${response.status} - ${response.statusText}`);
         }
-        const data: CoffeeBean[] = await response.json();
+        const data = await response.json();
         setCoffeeBeans(data.data);
       } catch (error) {
         setError((error as Error).message);

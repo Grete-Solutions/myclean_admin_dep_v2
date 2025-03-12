@@ -308,7 +308,7 @@ export default function UserDatasPage() {
         if (!response.ok) {
           throw new Error(`Error: ${response.status} - ${response.statusText}`);
         }
-        const data: UserData[] = await response.json();
+        const data = await response.json();
         setUserDatas(data.data);
       } catch (error) {
         setError((error as Error).message);
