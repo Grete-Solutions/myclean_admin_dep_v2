@@ -41,6 +41,6 @@ export const config = {
      * - /_next (Next.js internals)
      * - /images, /fonts, etc. (public assets)
      */
-    "/((?!login|api/auth|_next|images|fonts).*)"
+    "/"
   ],
 };

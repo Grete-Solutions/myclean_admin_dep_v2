@@ -1,9 +1,9 @@
 import { getToken } from 'next-auth/jwt';
-import { NextRequestWithAuth } from 'next-auth/middleware';
-
-export async function GET(req: NextRequestWithAuth) {
-  const tokeninfo = await getToken({ req });
-
+import { NextRequest } from 'next/server';
+// import { cookies } from 'next/headers';
+export async function GET(request: NextRequest) {
+  // Get token using the standard request
+  const tokeninfo = await getToken({ req: request });
   const token = tokeninfo?.idToken;
 
   console.log('Token:', token); // Log token to check if it exists
