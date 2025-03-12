@@ -3,11 +3,11 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { NextAuthOptions } from "next-auth";
 
  const authOptions: NextAuthOptions = {
-  secret: process.env.NEXTAUTH_SECRET,
-  debug: true,
+  secret: process.env.NEXTAUTH_SECRET, 
+  debug: process.env.NODE_ENV === "production",
   session: {
     strategy: "jwt",
-    maxAge: 60 * 60 * 24, // 24 hours
+    maxAge: 600,
   },
   pages: {
     signIn: "/login",
