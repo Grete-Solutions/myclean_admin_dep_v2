@@ -2,7 +2,7 @@ import NextAuth, { User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { NextAuthOptions } from "next-auth";
 
-export const authOptions: NextAuthOptions = {
+ const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   debug: true,
   session: {
