@@ -303,7 +303,7 @@ export default function CoffeeBeansPage() {
 
     const fetchBeans = async () => {
       try {
-        const response = await fetch("/api/GET/getBeans");
+        const response = await fetch("/api/GET/drivers");
         if (!response.ok) {
           throw new Error(`Error: ${response.status} - ${response.statusText}`);
         }

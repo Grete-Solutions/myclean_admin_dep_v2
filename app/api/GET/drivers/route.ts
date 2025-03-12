@@ -11,9 +11,9 @@ export async function GET(request: NextRequest) {
   if (!token) {
     return Response.json({ error: 'No token found' }, { status: 401 });
   }
-  
 
-  const res = await fetch(`${process.env.URLB}/admin/get?from=2024-09-01&to=2025-09-30`, {
+  const res = await fetch(`${process.env.URLB}/users/get?userType=2&city=Accra&limit=20
+`, {
     cache: 'no-cache',
     headers: {
       'Content-Type': 'application/json',
