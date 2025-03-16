@@ -192,9 +192,7 @@ const columns: ColumnDef<ServiceLocation>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(location.city)}>
-              Copy City
-            </DropdownMenuItem>
+
             <DropdownMenuSeparator />
             <DropdownMenuItem>View details</DropdownMenuItem>
             <DropdownMenuItem>Edit location</DropdownMenuItem>
