@@ -289,7 +289,6 @@ export default function ServicePage() {
   return (
     <div className="container mx-auto py-10">
       <div className="flex items-center justify-between">
-      <ServiceLocationsSheet/>
       </div>
       {loading && (
         <div className="flex justify-center items-center h-64">
