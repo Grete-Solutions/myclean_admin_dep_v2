@@ -23,5 +23,6 @@ export async function GET(request: NextRequest) {
   });
   
   const admin = await res.json();
+  console.log('Admin:', admin);
   return Response.json(admin);
 }

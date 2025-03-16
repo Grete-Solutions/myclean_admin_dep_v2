@@ -16,51 +16,41 @@ export async function POST(req: NextRequest) {
     }
     
     const {
+      slug,
       name,
-      password,
-      email,
-      role,
-      address,
+      description,
       country,
-      state,
-      postalCode,
-      phone,
       city
     } = await req.json();
     
-    const response = await fetch(`${process.env.URLB}/admin/register`, {
+    const response = await fetch(`${process.env.URLB}/api/privileges`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ 
+        slug,
         name,
-        password,
-        email,
-        role,
-        address,
+        description,
         country,
-        state,
-        postalCode,
-        phone,
-        city
+        city 
       }),
     });
     
     if (!response.ok) {
       const errorData = await response.json();
       return NextResponse.json(
-        { message: errorData.message || 'Failed to register admin' }, 
+        { message: errorData.message || 'Failed to create privilege' }, 
         { status: response.status }
       );
     }
     
     const data = await response.json();
-    return NextResponse.json(data.data);
+    return NextResponse.json(data);
   } catch (error) {
     if (error instanceof Error) {
-      console.error('Error registering admin:', error.message);
+      console.error('Error creating privilege:', error.message);
       return NextResponse.json(
         { message: error.message }, 
         { status: 500 }

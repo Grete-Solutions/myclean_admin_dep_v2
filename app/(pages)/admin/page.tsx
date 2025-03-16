@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { ChevronDown, MoreHorizontal } from "lucide-react"
+import { ChevronDown } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -21,9 +21,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
@@ -35,6 +32,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import AdminSheet from "./adminsheet"
+import Actions from "./Actions"
 
 // Define the admin data type
 interface AdminData {
@@ -146,30 +145,9 @@ const columns: ColumnDef<AdminData>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => {
-      const admin = row.original;
-
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(admin.id)}>
-              Copy ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View details</DropdownMenuItem>
-            <DropdownMenuItem>Edit admin</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
+    cell: ({ row }) => <Actions admin={row.original} />,
+  }
+  
 ];
 
 // This component is now internal to the file instead of exported
@@ -336,7 +314,7 @@ export default function Page() {
   return (
     <div className="container mx-auto py-10">
       <div className="flex items-center justify-between">
-        {/* You can add page title, buttons, etc. here */}
+<AdminSheet/>
       </div>
       {loading && (
         <div className="flex justify-center items-center h-64">

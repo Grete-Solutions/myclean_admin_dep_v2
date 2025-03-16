@@ -37,31 +37,22 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 
-// Define the coffee bean data type based on Prisma schema
-export type CoffeeBean = {
+// Define the promo code data type based on API response
+export type PromoCode = {
   id: string;
-  name: string;
-  description: string;
-  price: number; // Convert from string in API response
-  stock: number;
-  image: string | null;
-  images: string[];
-  category: "COFFEE_BEAN";
-  createdAt: Date;
-  updatedAt: Date;
-  isActive: boolean;
-  coffeeBeanDetails: {
-    id: string;
-    origin: string;
-    roastLevel: "LIGHT" | "MEDIUM" | "MEDIUM_DARK" | "DARK";
-    flavorNotes: string[];
-    processMethod: string;
-    weightGrams: number;
-    availableGrinds: string[];
-    productId: string;
-  };
+  code: string;
+  coupon_type: "Numeric" | "Percentage";
+  user_type: string;
+  value: string;
+  count: string;
+  used_count?: string;
+  expired_at: string;
+  created_at?: string;
+  updated_at?: string;
+  isActive?: boolean;
 };
- const columns: ColumnDef<CoffeeBean>[] = [
+
+const columns: ColumnDef<PromoCode>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -85,117 +76,112 @@ export type CoffeeBean = {
     enableHiding: false,
   },
   {
-    accessorKey: "name",
-    header: "Name",
-    cell: ({ row }) => <div className="font-medium">{row.original.name}</div>,
+    accessorKey: "code",
+    header: "Code",
+    cell: ({ row }) => <div className="font-medium">{row.original.code}</div>,
   },
   {
-    accessorKey: "coffeeBeanDetails.origin",
+    accessorKey: "coupon_type",
     header: ({ column }) => (
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Origin
+        Type
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
-    cell: ({ row }) => <div>{row.original.coffeeBeanDetails.origin}</div>,
-  },
-  {
-    accessorKey: "coffeeBeanDetails.roastLevel",
-    header: "Roast Level",
     cell: ({ row }) => {
-      const roastLevel = row.original.coffeeBeanDetails.roastLevel;
+      const couponType = row.original.coupon_type;
       return (
         <Badge
-          variant={
-            roastLevel === "LIGHT"
-              ? "outline"
-              : roastLevel === "MEDIUM"
-              ? "secondary"
-              : roastLevel === "MEDIUM_DARK"
-              ? "default"
-              : "destructive"
-          }
+          variant={couponType === "Percentage" ? "secondary" : "outline"}
         >
-          {roastLevel.replace("_", " ")}
+          {couponType}
         </Badge>
       );
     },
   },
   {
-    accessorKey: "coffeeBeanDetails.flavorNotes",
-    header: "Flavor Notes",
+    accessorKey: "user_type",
+    header: "User Type",
     cell: ({ row }) => {
-      const flavorNotes = row.original.coffeeBeanDetails.flavorNotes;
-      return (
-        <div className="flex flex-wrap gap-1">
-          {flavorNotes.slice(0, 3).map((note, i) => (
-            <Badge key={i} variant="outline" className="text-xs">
-              {note}
-            </Badge>
-          ))}
-          {flavorNotes.length > 3 && (
-            <Badge variant="outline" className="text-xs">
-              +{flavorNotes.length - 3} more
-            </Badge>
-          )}
-        </div>
-      );
+      const userType = row.original.user_type;
+      const userTypeMap: Record<string, string> = {
+        "1": "Customer",
+        "2": "Driver",
+        "3": "Admin",
+        "0": "All"
+      };
+      return <div>{userTypeMap[userType] || userType}</div>;
     },
   },
   {
-    accessorKey: "coffeeBeanDetails.processMethod",
-    header: "Process",
-    cell: ({ row }) => <div>{row.original.coffeeBeanDetails.processMethod}</div>,
-  },
-  {
-    accessorKey: "coffeeBeanDetails.weightGrams",
-    header: "Weight (g)",
-    cell: ({ row }) => <div>{row.original.coffeeBeanDetails.weightGrams}</div>,
-  },
-  {
-    accessorKey: "price",
+    accessorKey: "value",
     header: ({ column }) => (
       <Button
         variant="ghost"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
-        Price
+        Value
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
     cell: ({ row }) => {
-      const price = parseFloat(row.original.price.toString());
-      const formatted = new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-      }).format(price);
-      return <div className="text-right font-medium">{formatted}</div>;
+      const value = row.original.value;
+      const type = row.original.coupon_type;
+      return (
+        <div className="font-medium">
+          {type === "Percentage" ? `${value}%` : `$${value}`}
+        </div>
+      );
     },
   },
   {
-    accessorKey: "stock",
-    header: "Stock",
+    accessorKey: "count",
+    header: "Total Count",
+    cell: ({ row }) => <div>{row.original.count}</div>,
+  },
+  {
+    accessorKey: "used_count",
+    header: "Used",
+    cell: ({ row }) => <div>{row.original.used_count || "0"}</div>,
+  },
+  {
+    accessorKey: "expired_at",
+    header: "Expires",
     cell: ({ row }) => {
-      const stock = row.original.stock;
-      return <div className={stock <= 10 ? "text-red-500 font-medium" : ""}>{stock}</div>;
+      const expiryDate = new Date(row.original.expired_at);
+      const now = new Date();
+      const isExpired = expiryDate < now;
+      
+      return (
+        <div className={isExpired ? "text-red-500" : ""}>
+          {expiryDate.toLocaleDateString()}
+        </div>
+      );
     },
   },
   {
     accessorKey: "isActive",
     header: "Status",
-    cell: ({ row }) => (
-      <div className={row.original.isActive ? "text-green-500" : "text-red-500"}>
-        {row.original.isActive ? "Active" : "Inactive"}
-      </div>
-    ),
+    cell: ({ row }) => {
+      const isActive = row.original.isActive !== false;
+      const expiryDate = new Date(row.original.expired_at);
+      const now = new Date();
+      const isExpired = expiryDate < now;
+      
+      return (
+        <Badge variant={isActive && !isExpired ? "default" : "destructive"}>
+          {isActive && !isExpired ? "Active" : "Inactive"}
+        </Badge>
+      );
+    },
   },
   {
     id: "actions",
     cell: ({ row }) => {
-      const bean = row.original;
+      const promo = row.original;
 
       return (
         <DropdownMenu>
@@ -207,13 +193,13 @@ export type CoffeeBean = {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(bean.id)}>
-              Copy ID
+            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(promo.code)}>
+              Copy Code
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>View details</DropdownMenuItem>
-            <DropdownMenuItem>Update stock</DropdownMenuItem>
-            <DropdownMenuItem>Edit bean</DropdownMenuItem>
+            <DropdownMenuItem>Edit promo</DropdownMenuItem>
+            <DropdownMenuItem className="text-red-600">Deactivate</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -221,8 +207,7 @@ export type CoffeeBean = {
   },
 ];
 
-
-function CoffeeBeansDataTable({ data }: { data: CoffeeBean[] }) {
+function PromoCodesDataTable({ data }: { data: PromoCode[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -251,10 +236,10 @@ function CoffeeBeansDataTable({ data }: { data: CoffeeBean[] }) {
     <div className="w-full">
       <div className="flex items-center py-4">
         <Input
-          placeholder="Filter by name..."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          placeholder="Filter by code..."
+          value={(table.getColumn("code")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
+            table.getColumn("code")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -322,7 +307,7 @@ function CoffeeBeansDataTable({ data }: { data: CoffeeBean[] }) {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No data found.
+                  No promo codes found.
                 </TableCell>
               </TableRow>
             )}
@@ -357,48 +342,47 @@ function CoffeeBeansDataTable({ data }: { data: CoffeeBean[] }) {
   )
 }
 
-// Example page component that uses the CoffeeBeansDataTable
-export default function CoffeeBeansPage() {
-  const [coffeeBeans, setCoffeeBeans] = React.useState<CoffeeBean[]>([]);
+// Page component that uses the PromoCodesDataTable
+export default function PromoCodesPage() {
+  const [promoCodes, setPromoCodes] = React.useState<PromoCode[]>([]);
   const [loading, setLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
 
-    const fetchBeans = async () => {
-      try {
-        const response = await fetch("/api/GET/getBeans");
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status} - ${response.statusText}`);
-        }
-        const data= await response.json();
-        setCoffeeBeans(data.data);
-      } catch (error) {
-        setError((error as Error).message);
-      } finally {
-        setLoading(false);
+  const fetchPromoCodes = async () => {
+    try {
+      const response = await fetch("/api/GET/coupons/coupon");
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} - ${response.statusText}`);
       }
-    };  React.useEffect(() => {
-
-
-    fetchBeans();
+      const data = await response.json();
+      setPromoCodes(data.data);
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };  
+  
+  React.useEffect(() => {
+    fetchPromoCodes();
   }, []);
 
   return (
     <div className="container mx-auto py-10">
-      <div className="flex items-center justify-between">
-   
-
-     
-
-
-
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Promo Codes</h1>
+        <Button>Create New Promo</Button>
       </div>
+      
       {loading && (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
         </div>
-      )}      {error && <p className="text-center text-red-500">{error}</p>}
-      {!loading && <CoffeeBeansDataTable data={coffeeBeans} />}
-
+      )}
+      
+      {error && <p className="text-center text-red-500">{error}</p>}
+      
+      {!loading && <PromoCodesDataTable data={promoCodes} />}
     </div>
   );
 }

@@ -11,8 +11,9 @@ export async function GET(request: NextRequest) {
   if (!token) {
     return Response.json({ error: 'No token found' }, { status: 401 });
   }
-
-  const res = await fetch(`${process.env.URLB}/vehicleMake/get?limit=70&from=2024&to=2025`, {
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+  const res = await fetch(`${process.env.URLB}/vehicleMake/get?id=${id}`, {
     cache: 'no-cache',
     headers: {
       'Content-Type': 'application/json',

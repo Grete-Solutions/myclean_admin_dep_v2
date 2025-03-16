@@ -13,7 +13,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import {  ChevronDown, MoreHorizontal } from "lucide-react"
+import {  ChevronDown } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -21,9 +21,7 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
+
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
@@ -35,6 +33,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import Actions from "./Actions"
+import VehicleMakeSheet from "./VehicleMakeSheet"
 
 type Data = {
   id: string;
@@ -108,29 +108,9 @@ type Data = {
   },
   {
     id: "actions",
-    cell: ({ row }) => {
-      const data = row.original;
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(data.id)}>
-              Copy ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>View details</DropdownMenuItem>
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
+    cell: ({ row }) => <Actions vehicle={row.original} />,
+  }
+  
 ];
 
  function VehicleMakeDataTable({ data }: { data: Data[] }) {
@@ -295,6 +275,7 @@ export default function VehicleMake() {
 
   return (
     <div className="container mx-auto py-10">
+      <VehicleMakeSheet/>
       {loading && (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>

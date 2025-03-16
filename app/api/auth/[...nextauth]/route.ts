@@ -7,7 +7,7 @@ import { NextAuthOptions } from "next-auth";
   debug: process.env.NODE_ENV === "production",
   session: {
     strategy: "jwt",
-    maxAge: 600,
+    maxAge: 300,
   },
   pages: {
     signIn: "/login",

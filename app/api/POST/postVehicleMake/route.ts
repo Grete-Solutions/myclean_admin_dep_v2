@@ -16,51 +16,41 @@ export async function POST(req: NextRequest) {
     }
     
     const {
-      name,
-      password,
-      email,
-      role,
-      address,
-      country,
-      state,
-      postalCode,
-      phone,
-      city
+      make,
+      model,
+      year,
+      capacity,
+      description
     } = await req.json();
     
-    const response = await fetch(`${process.env.URLB}/admin/register`, {
+    const response = await fetch(`${process.env.URLB}/api/vehicle-makes`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ 
-        name,
-        password,
-        email,
-        role,
-        address,
-        country,
-        state,
-        postalCode,
-        phone,
-        city
+        make,
+        model,
+        year,
+        capacity,
+        description
       }),
     });
     
     if (!response.ok) {
       const errorData = await response.json();
       return NextResponse.json(
-        { message: errorData.message || 'Failed to register admin' }, 
+        { message: errorData.message || 'Failed to create vehicle make' }, 
         { status: response.status }
       );
     }
     
     const data = await response.json();
-    return NextResponse.json(data.data);
+    return NextResponse.json(data);
   } catch (error) {
     if (error instanceof Error) {
-      console.error('Error registering admin:', error.message);
+      console.error('Error creating vehicle make:', error.message);
       return NextResponse.json(
         { message: error.message }, 
         { status: 500 }

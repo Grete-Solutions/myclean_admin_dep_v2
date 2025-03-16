@@ -14,15 +14,28 @@ export async function GET(request: NextRequest) {
  
   const { searchParams } = new URL(request.url);
   const id = searchParams.get('id');
-  const res = await fetch(`${process.env.URLB}/admin/get?id=${id}`, {
-    cache: 'no-cache',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  try {
+    const res = await fetch(`${process.env.URLB}/admin/get?id=${id}`, {
+      cache: 'no-cache',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
   
-  const product = await res.json();
-  console.log('Product:', product);
-  return Response.json(product);
+    console.log('Response Status:', res.status);
+  
+    if (!res.ok) {
+      throw new Error(`API request failed with status ${res.status}`);
+    }
+  
+    const data = await res.json();
+    console.log('Fetched Data:', data);
+    return Response.json(data);
+  } catch (error) {
+    console.error('Error fetching admin data:', error);
+    return Response.json({ error: 'Failed to fetch admin data' }, { status: 500 });
+  }
+  
+  
 }
