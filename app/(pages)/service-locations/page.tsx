@@ -32,6 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import ServiceLocationsSheet from "./ServiceLocationsSheet"
 
 type Coordinate = {
   _latitude: number;
@@ -288,7 +289,7 @@ export default function ServicePage() {
   return (
     <div className="container mx-auto py-10">
       <div className="flex items-center justify-between">
-        {/* Add buttons or other controls here */}
+      <ServiceLocationsSheet/>
       </div>
       {loading && (
         <div className="flex justify-center items-center h-64">
