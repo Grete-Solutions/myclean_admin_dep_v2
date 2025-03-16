@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { toast } from 'sonner';
 import { 
   Sheet, 
@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent } from "@/components/ui/card";
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer,  Polyline, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -26,25 +26,30 @@ type ServiceLocation = {
   isActive: boolean;
   countryISOCode: string;
   commission: number;
-  coordinates: [number, number] | null; // Tuple for lat/lng, can be null if not selected
+  coordinates: [number, number][]; // Array of coordinate tuples for polylines
 }
 
 // MapSelector component using Leaflet
 function MapSelector({ coordinates, onCoordinateChange }: {
-  coordinates: [number, number] | null;
-  onCoordinateChange: (coords: [number, number] | null) => void;
+  coordinates: [number, number][];
+  onCoordinateChange: (coords: [number, number][]) => void;
 }) {
-  // Center map at a neutral location if no selection has been made
   const defaultCenter: [number, number] = [20, 0]; // Approximately center of the world map
-  const markerRef = useRef<L.Marker>(null);
-  const mapRef = useRef<L.Map>(null);
+  const mapRef = useRef<L.Map | null>(null);
 
   // Fix Leaflet marker icon issue
   useEffect(() => {
-    // Cast to any to avoid TypeScript errors with internal Leaflet properties
-    const DefaultIcon = L.Icon.Default as any;
-    if (DefaultIcon.prototype._getIconUrl) {
-      delete DefaultIcon.prototype._getIconUrl;
+    // Create an interface that extends the Icon.Default prototype but includes the _getIconUrl property
+    interface IconDefaultExtended extends L.Icon.Default {
+      _getIconUrl?: unknown;
+    }
+    
+    // Cast the prototype to our extended interface
+    const iconPrototype = L.Icon.Default.prototype as IconDefaultExtended;
+    
+    // Now we can safely delete the property
+    if (iconPrototype._getIconUrl) {
+      delete iconPrototype._getIconUrl;
     }
     
     L.Icon.Default.mergeOptions({
@@ -59,119 +64,134 @@ function MapSelector({ coordinates, onCoordinateChange }: {
     const map = useMapEvents({
       click: (e) => {
         const { lat, lng } = e.latlng;
-        onCoordinateChange([
-          parseFloat(lat.toFixed(6)), 
-          parseFloat(lng.toFixed(6))
-        ]);
+        const newCoords: [number, number][] = [
+          ...coordinates,
+          [parseFloat(lat.toFixed(6)), parseFloat(lng.toFixed(6))]
+        ];
+        onCoordinateChange(newCoords);
       },
     });
     
-    // Store map reference
     mapRef.current = map;
-    
     return null;
   }
 
-  // If coordinates are cleared, center the map again
+  // Center map if coordinates change
   useEffect(() => {
-    if (!coordinates && mapRef.current) {
+    if (coordinates.length > 0 && mapRef.current) {
+      // Create a proper bounds object by explicitly creating LatLng objects
+      const latLngs = coordinates.map(coord => L.latLng(coord[0], coord[1]));
+      const bounds = L.latLngBounds(latLngs);
+      mapRef.current.fitBounds(bounds);
+    } else if (mapRef.current) {
       mapRef.current.setView(defaultCenter, 2);
     }
+  }, [coordinates]);
+
+  // Create a closed polygon coordinates array by adding the first coordinate at the end
+  const closedCoordinates = useMemo(() => {
+    if (coordinates.length >= 3) {
+      return [...coordinates, coordinates[0]];
+    }
+    return coordinates;
   }, [coordinates]);
 
   return (
     <div className="border rounded-md overflow-hidden">
       <div className="h-64 w-full relative">
         <MapContainer 
-          center={coordinates || defaultCenter} 
-          zoom={coordinates ? 10 : 2} 
+          center={defaultCenter} 
+          zoom={2} 
           scrollWheelZoom={false}
           style={{ height: '100%', width: '100%' }}
         >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           
-          {coordinates && (
-            <Marker 
-              position={coordinates}
-              draggable={true}
-              ref={markerRef}
-              eventHandlers={{
-                dragend: () => {
-                  const marker = markerRef.current;
-                  if (marker) {
-                    const position = marker.getLatLng();
-                    onCoordinateChange([
-                      parseFloat(position.lat.toFixed(6)), 
-                      parseFloat(position.lng.toFixed(6))
-                    ]);
-                  }
-                },
-              }}
-            />
+          {/* Removed markers */}
+          
+          {coordinates.length >= 3 && (
+            <Polyline positions={closedCoordinates} color="blue" />
           )}
           
           <MapEventHandler />
         </MapContainer>
         
-        {!coordinates && (
+        {coordinates.length === 0 && (
           <div className="absolute top-0 left-0 right-0 bg-yellow-100 text-yellow-800 p-2 text-sm font-medium text-center">
-            Click on the map to select a location
+            Click on the map to select locations for polylines
           </div>
         )}
       </div>
       
-      {/* Display selected coordinates or selection prompt */}
       <div className="mt-2 text-sm p-2">
-        {coordinates ? (
+        {coordinates.length > 0 ? (
           <div>
             <div className="flex justify-between items-center mb-2">
-              <span className="font-medium">Selected Location:</span>
+              <span className="font-medium">Selected Locations ({coordinates.length}):</span>
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => onCoordinateChange(null)}
+                onClick={() => onCoordinateChange([])}
                 className="h-8 text-xs"
               >
-                Clear Selection
+                Clear All
               </Button>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label htmlFor="latDisplay">Latitude:</Label>
-                <Input 
-                  id="latDisplay" 
-                  value={coordinates[0]} 
-                  onChange={(e) => {
-                    const newLat = parseFloat(e.target.value);
-                    if (!isNaN(newLat)) {
-                      onCoordinateChange([newLat, coordinates[1]]);
-                    }
-                  }}
-                  className="mt-1"
-                />
+            {coordinates.map((coord, index) => (
+              <div key={index} className="grid grid-cols-3 gap-2 mb-2">
+                <div>
+                  <Label htmlFor={`lat-${index}`}>Lat {index + 1}:</Label>
+                  <Input 
+                    id={`lat-${index}`} 
+                    value={coord[0]} 
+                    onChange={(e) => {
+                      const newLat = parseFloat(e.target.value);
+                      if (!isNaN(newLat)) {
+                        const newCoords = [...coordinates];
+                        newCoords[index] = [newLat, coord[1]];
+                        onCoordinateChange(newCoords);
+                      }
+                    }}
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor={`lng-${index}`}>Lng {index + 1}:</Label>
+                  <Input 
+                    id={`lng-${index}`} 
+                    value={coord[1]} 
+                    onChange={(e) => {
+                      const newLng = parseFloat(e.target.value);
+                      if (!isNaN(newLng)) {
+                        const newCoords = [...coordinates];
+                        newCoords[index] = [coord[0], newLng];
+                        onCoordinateChange(newCoords);
+                      }
+                    }}
+                    className="mt-1"
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    onClick={() => {
+                      const newCoords = coordinates.filter((_, i) => i !== index);
+                      onCoordinateChange(newCoords);
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </div>
               </div>
-              <div>
-                <Label htmlFor="lngDisplay">Longitude:</Label>
-                <Input 
-                  id="lngDisplay" 
-                  value={coordinates[1]} 
-                  onChange={(e) => {
-                    const newLng = parseFloat(e.target.value);
-                    if (!isNaN(newLng)) {
-                      onCoordinateChange([coordinates[0], newLng]);
-                    }
-                  }}
-                  className="mt-1"
-                />
-              </div>
-            </div>
+            ))}
           </div>
         ) : (
           <div className="flex items-center justify-center p-4 border border-dashed border-yellow-500 rounded-md bg-yellow-50">
-            <p className="text-yellow-700">No location selected yet. Please click on the map.</p>
+            <p className="text-yellow-700">No locations selected yet. Please click on the map.</p>
           </div>
         )}
       </div>
@@ -189,7 +209,7 @@ function ServiceLocationsSheet() {
     isActive: true,
     countryISOCode: "",
     commission: 0,
-    coordinates: null  // Start with no selection
+    coordinates: [] // Start with empty array for multiple coordinates
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -207,7 +227,7 @@ function ServiceLocationsSheet() {
     });
   };
 
-  const handleCoordinateChange = (newCoordinates: [number, number] | null) => {
+  const handleCoordinateChange = (newCoordinates: [number, number][]) => {
     setNewLocation({
       ...newLocation,
       coordinates: newCoordinates
@@ -222,9 +242,9 @@ function ServiceLocationsSheet() {
         return;
       }
 
-      // Validate coordinates
-      if (!newLocation.coordinates) {
-        toast.error("Please select a location on the map!");
+      // Validate minimum 3 coordinates for polylines
+      if (newLocation.coordinates.length < 3) {
+        toast.error("Please select at least 3 locations on the map for polylines!");
         return;
       }
 
@@ -241,7 +261,7 @@ function ServiceLocationsSheet() {
         isActive: true,
         countryISOCode: "",
         commission: 0,
-        coordinates: null // Reset to no selection
+        coordinates: []
       });
       setOpen(false);
       
@@ -254,10 +274,8 @@ function ServiceLocationsSheet() {
 
   // Simulated POST function
   const postServiceLocation = async (locationData: ServiceLocation) => {
-    // This would be your actual API call
     return new Promise<{ success: boolean; data: ServiceLocation }>((resolve) => {
       console.log("Posting location data:", locationData);
-      // Simulate network delay
       setTimeout(() => {
         resolve({ success: true, data: locationData });
       }, 500);
@@ -265,8 +283,7 @@ function ServiceLocationsSheet() {
   };
 
   return (
-    <div >
-      
+    <div>
       <div className="mb-4">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
@@ -276,7 +293,7 @@ function ServiceLocationsSheet() {
             <SheetHeader>
               <SheetTitle>Add New Service Location</SheetTitle>
               <SheetDescription>
-                Add a new city where your service is available. You must click on the map to select exact coordinates.
+                Add a new city with at least 3 coordinates to create polylines.
               </SheetDescription>
             </SheetHeader>
             
@@ -338,7 +355,7 @@ function ServiceLocationsSheet() {
               
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label className="text-right" htmlFor="map">
-                  Location
+                  Locations
                 </Label>
                 <div className="col-span-3">
                   <MapSelector 
@@ -368,7 +385,7 @@ function ServiceLocationsSheet() {
               </SheetClose>
               <Button 
                 onClick={addLocation}
-                disabled={!newLocation.coordinates}
+                disabled={newLocation.coordinates.length < 3}
               >
                 Save Location
               </Button>
@@ -378,48 +395,53 @@ function ServiceLocationsSheet() {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {locations.map((location, index) => (
-          <Card key={index}>
-            <CardContent className="p-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-bold text-lg">{location.city}</h3>
-                  <p className="text-sm text-gray-500">{location.countryISOCode}</p>
-                </div>
-                <div className={`px-2 py-1 rounded text-xs ${location.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {location.isActive ? 'Active' : 'Inactive'}
-                </div>
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <span className="text-gray-500">Price:</span> ${location.price}
-                </div>
-                <div>
-                  <span className="text-gray-500">Commission:</span> {location.commission}%
-                </div>
-                <div className="col-span-2">
-                  <span className="text-gray-500">Coordinates:</span> {location.coordinates?.[0]}, {location.coordinates?.[1]}
-                </div>
-              </div>
-              {location.coordinates && (
-                <div className="mt-2 h-32">
-                  <MapContainer 
-                    center={location.coordinates} 
-                    zoom={10} 
-                    scrollWheelZoom={false}
-                    style={{ height: '100%', width: '100%' }}
-                    attributionControl={false}
-                  >
-                    <TileLayer
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                    <Marker position={location.coordinates} />
-                  </MapContainer>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+{locations.map((location, index) => (
+  <Card key={index}>
+    <CardContent className="p-4">
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="font-bold text-lg">{location.city}</h3>
+          <p className="text-sm text-gray-500">{location.countryISOCode}</p>
+        </div>
+        <div className={`px-2 py-1 rounded text-xs ${location.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+          {location.isActive ? 'Active' : 'Inactive'}
+        </div>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+        <div>
+          <span className="text-gray-500">Price:</span> ${location.price}
+        </div>
+        <div>
+          <span className="text-gray-500">Commission:</span> {location.commission}%
+        </div>
+        <div className="col-span-2">
+          <span className="text-gray-500">Coordinates:</span> 
+          {location.coordinates.map(coord => `${coord[0]}, ${coord[1]}`).join(' | ')}
+        </div>
+      </div>
+      {location.coordinates.length >= 3 && (
+        <div className="mt-2 h-32">
+          <MapContainer 
+            center={location.coordinates[0]} 
+            zoom={10} 
+            scrollWheelZoom={false}
+            style={{ height: '100%', width: '100%' }}
+            attributionControl={false}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            {/* Removed markers */}
+            <Polyline 
+              positions={[...location.coordinates, location.coordinates[0]]} 
+              color="blue" 
+            />
+          </MapContainer>
+        </div>
+      )}
+    </CardContent>
+  </Card>
+))}
       </div>
     </div>
   );
