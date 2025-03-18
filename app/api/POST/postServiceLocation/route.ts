@@ -16,32 +16,34 @@ export async function POST(req: NextRequest) {
     }
     
     const {
-      slug,
-      name,
-      description,
-      country,
-      city
+      city,
+      price,
+      isActive,
+      countryISOCode,
+      commission,
+      coordinates
     } = await req.json();
     
-    const response = await fetch(`${process.env.URLB}/privileges/create`, {
+    const response = await fetch(`${process.env.URLB}/location/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ 
-        slug,
-        name,
-        description,
-        country,
-        city 
+        city,
+        price,
+        isActive,
+        countryISOCode,
+        commission,
+        coordinates
       }),
     });
     
     if (!response.ok) {
       const errorData = await response.json();
       return NextResponse.json(
-        { message: errorData.message || 'Failed to create privilege' }, 
+        { message: errorData.message || 'Failed to create service location' }, 
         { status: response.status }
       );
     }
@@ -50,7 +52,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(data);
   } catch (error) {
     if (error instanceof Error) {
-      console.error('Error creating privilege:', error.message);
+      console.error('Error creating service location:', error.message);
       return NextResponse.json(
         { message: error.message }, 
         { status: 500 }

@@ -95,7 +95,7 @@ const ServiceLocationSheet: React.FC = () => {
     try {
       // Send each service location to the API
       for (const location of serviceLocations) {
-        await fetch('/api/POST/location', {
+        await fetch('/api/POST/postServiceLocation', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

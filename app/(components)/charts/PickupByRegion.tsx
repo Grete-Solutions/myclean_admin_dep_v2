@@ -52,7 +52,7 @@ export const PickupsByRegion = () => {
                       <span className="h-3 w-3 rounded-full mr-2" style={{ backgroundColor: item.color }}></span>
                       <span>{item.name}</span>
                     </div>
-                    <span>${item.value}M</span>
+                    <span>GH₵{item.value}M</span>
                   </li>
                 ))}
               </ul>

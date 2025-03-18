@@ -5,9 +5,9 @@ import { MapPreviewCard } from './charts/MapPreview';
 import { PickupChart } from './charts/PickUpChart';
 import { PickupDetails } from './charts/PickUpDetails';
 import { PickupsByRegion } from './charts/PickupByRegion';
-import { UserChart } from './charts/UserChart';
 import WasteManagementDashboard from './charts/Metrics';
 import { useSession } from 'next-auth/react';
+import UserChart from './charts/UserChart';
 
 // Function to determine morning or afternoon
 const getGreeting = () => {
@@ -42,7 +42,7 @@ const Header: React.FC = () => {
 // Main Dashboard Component
 const DashboardCard: React.FC = () => {
   return (
-    <div className="bg-gray-100 min-h-screen p-6">
+    <div className="h-full w-full p-6">
       <Header />
       <WasteManagementDashboard />
       

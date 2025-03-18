@@ -32,15 +32,16 @@ export const authMiddleware = withAuth({
 });
 
 // Protect all routes except /login and public assets
+// Protect all routes except /login/** and API routes
 export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - /login
-     * - /api/auth (NextAuth.js API routes)
+     * - /login (any path under login directory)
+     * - /api (any API routes)
      * - /_next (Next.js internals)
      * - /images, /fonts, etc. (public assets)
      */
-    "/"
+    '/((?!login/|api/|_next/|images/|fonts/|favicon.ico).*)',
   ],
 };
