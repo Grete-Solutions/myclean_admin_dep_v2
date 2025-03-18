@@ -34,6 +34,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import Actions from "./Actions"
+import PrivilegeSheet from "./PrivilegeSheet"
 
 interface Data {
   id: string;
@@ -298,7 +299,7 @@ export default function PrivilegePage() {
   return (
     <div className="container mx-auto py-10">
       <div className="flex items-center justify-between">
-   
+   <PrivilegeSheet/>
 
      
 

@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       description
     } = await req.json();
     
-    const response = await fetch(`${process.env.URLB}/api/vehicle-makes`, {
+    const response = await fetch(`${process.env.URLB}/vehicleMake/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

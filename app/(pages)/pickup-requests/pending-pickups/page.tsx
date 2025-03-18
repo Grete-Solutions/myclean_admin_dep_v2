@@ -54,7 +54,7 @@ type Pickup = {
   };
 };
 
-// Modified columns for cancelled pickups with additional cancellation-specific info
+// Modified columns for Pending pickups with additional cancellation-specific info
 const columns: ColumnDef<Pickup>[] = [
   {
     id: "select",
@@ -155,11 +155,11 @@ const columns: ColumnDef<Pickup>[] = [
   },
   {
     accessorKey: "status",
-    header: "Cancellation",
+    header: "Status",
     cell: () => (
       <Badge variant="destructive" className="flex items-center w-fit">
         <X className="h-3 w-3 mr-1" />
-        Cancelled
+        Pending
       </Badge>
     ),
   },
@@ -298,7 +298,7 @@ function PendingPickupsTable({ data }: { data: Pickup[] }) {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No cancelled pickups found.
+                  No Pending pickups found.
                 </TableCell>
               </TableRow>
             )}
@@ -362,10 +362,10 @@ export default function PendingPickupsPage() {
   return (
     <div className="container mx-auto py-10">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Cancelled Pickups</h1>
+        <h1 className="text-2xl font-bold">Pending Pickups</h1>
         <Button variant="outline" className="flex items-center">
           <X className="mr-2 h-4 w-4" />
-          Export Cancelled Pickups
+          Export Pending Pickups
         </Button>
       </div>
       

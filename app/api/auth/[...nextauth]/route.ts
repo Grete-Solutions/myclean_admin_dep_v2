@@ -35,7 +35,7 @@ import { NextAuthOptions } from "next-auth";
         }
 
         try {
-          console.log("Fetching user from backend...");
+          console.log("Fetching user from backend... with id token", token);
           const resUser = await fetch(
             `https://myclean-backend-v2.onrender.com/admin/get?email=${credentials.email}`,
             {

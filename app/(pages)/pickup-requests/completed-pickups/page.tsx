@@ -54,7 +54,7 @@ type Pickup = {
   };
 };
 
-// Modified columns for cancelled pickups with additional cancellation-specific info
+// Modified columns for Completed pickups with additional cancellation-specific info
 const columns: ColumnDef<Pickup>[] = [
   {
     id: "select",
@@ -153,13 +153,13 @@ const columns: ColumnDef<Pickup>[] = [
       );
     },
   },
-  {
+{
     accessorKey: "status",
-    header: "Cancellation",
+    header: "status",
     cell: () => (
       <Badge variant="destructive" className="flex items-center w-fit">
         <X className="h-3 w-3 mr-1" />
-        Cancelled
+        Completed
       </Badge>
     ),
   },
@@ -298,7 +298,7 @@ function CompletedPickupsTable({ data }: { data: Pickup[] }) {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No cancelled pickups found.
+                  No Completed pickups found.
                 </TableCell>
               </TableRow>
             )}
@@ -333,7 +333,7 @@ function CompletedPickupsTable({ data }: { data: Pickup[] }) {
   )
 }
 
-// Main component for cancelled pickups page
+// Main component for Completed pickups page
 export default function CompletedPickupsPage() {
   const [pickups, setPickups] = React.useState<Pickup[]>([]);
   const [loading, setLoading] = React.useState<boolean>(true);
@@ -364,10 +364,10 @@ export default function CompletedPickupsPage() {
   return (
     <div className="container mx-auto py-10">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Cancelled Pickups</h1>
+        <h1 className="text-2xl font-bold">Completed Pickups</h1>
         <Button variant="outline" className="flex items-center">
           <X className="mr-2 h-4 w-4" />
-          Export Cancelled Pickups
+          Export Completed Pickups
         </Button>
       </div>
       

@@ -32,6 +32,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import ServiceLocationsSheet from "./ServiceLocationsSheet"
 
 type Coordinate = {
   _latitude: number;
@@ -111,13 +112,16 @@ const columns: ColumnDef<ServiceLocation>[] = [
   {
     accessorKey: "coordinates",
     header: "Coordinates",
-    cell: ({ row }) => (
-      <div>
-        {row.original.coordinates 
-          ? `${row.original.coordinates._latitude.toFixed(4)}, ${row.original.coordinates._longitude.toFixed(4)}`
-          : "No coordinates"}
-      </div>
-    ),
+    cell: ({ row }) => {
+      const coordinates = row.original.coordinates;
+      return (
+        <div>
+          {coordinates && coordinates._latitude != null && coordinates._longitude != null
+            ? `${coordinates._latitude.toFixed(4)}, ${coordinates._longitude.toFixed(4)}`
+            : "No coordinates"}
+        </div>
+      );
+    },
   },
   // {
   //   id: "actions",
@@ -287,6 +291,7 @@ export default function ServicePage() {
 
   return (
     <div className="container mx-auto py-10">
+      <ServiceLocationsSheet/>
       <div className="flex items-center justify-between">
       </div>
       {loading && (

@@ -7,22 +7,35 @@ import { PickupDetails } from './charts/PickUpDetails';
 import { PickupsByRegion } from './charts/PickupByRegion';
 import { UserChart } from './charts/UserChart';
 import WasteManagementDashboard from './charts/Metrics';
+import { useSession } from 'next-auth/react';
 
+// Function to determine morning or afternoon
+const getGreeting = () => {
+  const hours = new Date().getHours();
+  return hours < 12 ? 'Good Morning' : 'Good Afternoon';
+};
 
 // Header Component
 const Header: React.FC = () => {
+  const { data: session } = useSession();
+  const userName = session?.user?.displayName || 'User';
+
   return (
     <div className="flex justify-between items-center mb-6">
       <div>
-        <div className="text-gray-500">Hello Pascal,</div>
-        <h1 className="text-2xl font-bold">Good Morning</h1>
+        <div className="text-gray-500">Hello {userName},</div>
+        <h1 className="text-2xl font-bold">{getGreeting()}</h1>
       </div>
       <div className="flex text-white space-x-3">
-            <button className="bg-black text-white rounded-md px-3 py-1">General Overview</button>
+        <button className="bg-black text-white rounded-md px-3 py-1">
+          General Overview
+        </button>
       </div>
     </div>
   );
 };
+
+
 
 
 
