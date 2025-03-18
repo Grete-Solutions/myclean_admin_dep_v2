@@ -21,11 +21,10 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
-import { LeafletMouseEvent } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { MapContainer, Marker, Polygon, TileLayer, Tooltip, useMapEvents } from 'react-leaflet';
+import dynamic from 'next/dynamic';
 
 // Define the types for the service location
 interface ServiceLocation {
@@ -46,75 +45,11 @@ interface ServiceLocationFormValues {
   commission: number;
 }
 
-// Component for drawing polygons on the map
-const MapDrawer: React.FC<{
-  coordinates: [number, number][];
-  setCoordinates: React.Dispatch<React.SetStateAction<[number, number][]>>;
-  setActivePolygons: React.Dispatch<React.SetStateAction<[number, number][][]>>;
-}> = ({ coordinates, setCoordinates, setActivePolygons }) => {
-  useMapEvents({
-    click: (e: LeafletMouseEvent) => {
-      const newCoord: [number, number] = [e.latlng.lat, e.latlng.lng];
-      setCoordinates((prev) => [...prev, newCoord]);
-    },
-    contextmenu: (e: LeafletMouseEvent) => {
-      e.originalEvent.preventDefault();
-      
-      // Ensure we have at least 3 points for a polygon
-      if (coordinates.length >= 3) {
-        setActivePolygons((prev) => [...prev, [...coordinates]]);
-        setCoordinates([]);
-      }
-    },
-  });
-
-  return null;
-};
-
-// Component to display coordinates
-const CoordinateDisplay: React.FC<{
-  coordinates: [number, number][];
-  activePolygons: [number, number][][];
-}> = ({ coordinates, activePolygons }) => {
-  return (
-    <div className="mt-4 p-4 border rounded-lg bg-gray-50">
-      <h3 className="font-medium mb-2">Coordinate Points</h3>
-      
-      {coordinates.length > 0 && (
-        <div className="mb-4">
-          <p className="text-sm font-medium text-gray-700">Current Points:</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-1">
-            {coordinates.map((coord, idx) => (
-              <div key={idx} className="text-sm p-1 bg-gray-100 rounded">
-                Point {idx + 1}: [{coord[0].toFixed(6)}, {coord[1].toFixed(6)}]
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      
-      {activePolygons.length > 0 && (
-        <div>
-          <p className="text-sm font-medium text-gray-700">Completed Polygons:</p>
-          <div className="mt-1">
-            {activePolygons.map((polygon, polyIdx) => (
-              <div key={polyIdx} className="mb-2">
-                <p className="text-sm text-gray-600">Polygon {polyIdx + 1} ({polygon.length} points):</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-2 mt-1">
-                  {polygon.map((coord, idx) => (
-                    <div key={idx} className="text-sm p-1 bg-gray-100 rounded">
-                      Point {idx + 1}: [{coord[0].toFixed(6)}, {coord[1].toFixed(6)}]
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+// Dynamically import the map components with no SSR
+const MapWithNoSSR = dynamic(
+  () => import('./MapComponent').then((mod) => mod.MapComponent),
+  { ssr: false }
+);
 
 // Main component
 const ServiceLocationSheet: React.FC = () => {
@@ -122,10 +57,16 @@ const ServiceLocationSheet: React.FC = () => {
   const [coordinates, setCoordinates] = useState<[number, number][]>([]);
   const [activePolygons, setActivePolygons] = useState<[number, number][][]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   
   // Ghana's center coordinates
   const ghanaCenterLat = 7.9465;
   const ghanaCenterLng = -1.0232;
+
+  // Use useEffect to set isClient to true after component mounts
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const form = useForm<ServiceLocationFormValues>({
     defaultValues: {
@@ -174,6 +115,51 @@ const ServiceLocationSheet: React.FC = () => {
       setIsSubmitting(false);
     }
   }
+
+  // Component to display coordinates
+  const CoordinateDisplay: React.FC<{
+    coordinates: [number, number][];
+    activePolygons: [number, number][][];
+  }> = ({ coordinates, activePolygons }) => {
+    return (
+      <div className="mt-4 p-4 border rounded-lg bg-gray-50">
+        <h3 className="font-medium mb-2">Coordinate Points</h3>
+        
+        {coordinates.length > 0 && (
+          <div className="mb-4">
+            <p className="text-sm font-medium text-gray-700">Current Points:</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-1">
+              {coordinates.map((coord, idx) => (
+                <div key={idx} className="text-sm p-1 bg-gray-100 rounded">
+                  Point {idx + 1}: [{coord[0].toFixed(6)}, {coord[1].toFixed(6)}]
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {activePolygons.length > 0 && (
+          <div>
+            <p className="text-sm font-medium text-gray-700">Completed Polygons:</p>
+            <div className="mt-1">
+              {activePolygons.map((polygon, polyIdx) => (
+                <div key={polyIdx} className="mb-2">
+                  <p className="text-sm text-gray-600">Polygon {polyIdx + 1} ({polygon.length} points):</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-2 mt-1">
+                    {polygon.map((coord, idx) => (
+                      <div key={idx} className="text-sm p-1 bg-gray-100 rounded">
+                        Point {idx + 1}: [{coord[0].toFixed(6)}, {coord[1].toFixed(6)}]
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
@@ -284,59 +270,16 @@ const ServiceLocationSheet: React.FC = () => {
               />
               
               <div className="h-64 md:h-80 border rounded-lg overflow-hidden">
-                <MapContainer
-                  center={[ghanaCenterLat, ghanaCenterLng]}
-                  zoom={7}
-                  style={{ height: '100%', width: '100%' }}
-                >
-                  <TileLayer
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                {isClient && (
+                  <MapWithNoSSR 
+                    center={[ghanaCenterLat, ghanaCenterLng]} 
+                    zoom={7}
+                    coordinates={coordinates}
+                    setCoordinates={setCoordinates}
+                    activePolygons={activePolygons}
+                    setActivePolygons={setActivePolygons}
                   />
-                  
-                  {/* Current polygon being drawn */}
-                  {coordinates.length > 1 && (
-                    <Polygon 
-                      positions={coordinates} 
-                      pathOptions={{ color: 'red', weight: 3 }}
-                    >
-                      <Tooltip permanent>
-                        Current polygon ({coordinates.length} points)
-                      </Tooltip>
-                    </Polygon>
-                  )}
-                  
-                  {/* Individual points of current polygon */}
-                  {coordinates.map((coord, idx) => (
-                    <Marker
-                      key={`current-${idx}`}
-                      position={coord}
-                    >
-                      <Tooltip permanent>
-                        Point {idx + 1}: [{coord[0].toFixed(6)}, {coord[1].toFixed(6)}]
-                      </Tooltip>
-                    </Marker>
-                  ))}
-                  
-                  {/* Previously completed polygons */}
-                  {activePolygons.map((polygon, polyIdx) => (
-                    <Polygon 
-                      key={polyIdx} 
-                      positions={polygon} 
-                      pathOptions={{ color: 'orange', fillColor: 'orange', fillOpacity: 0.3, weight: 3 }} 
-                    >
-                      <Tooltip permanent>
-                        Polygon {polyIdx + 1} ({polygon.length} points)
-                      </Tooltip>
-                    </Polygon>
-                  ))}
-                  
-                  <MapDrawer 
-                    coordinates={coordinates} 
-                    setCoordinates={setCoordinates} 
-                    setActivePolygons={setActivePolygons} 
-                  />
-                </MapContainer>
+                )}
               </div>
               
               <CoordinateDisplay 
