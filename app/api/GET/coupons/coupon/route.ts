@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   }
   
 
-  const res = await fetch(`${process.env.URLB}/coupons/get?limit=500&from=2024-01-01"`, {
+  const res = await fetch(`${process.env.URLB}/coupons/get?limit=500"`, {
     cache: 'no-cache',
     headers: {
       'Content-Type': 'application/json',
