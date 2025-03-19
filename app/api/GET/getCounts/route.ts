@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
     
     // Calculate total amount of completed payments
     const completedPayments = payments
-      .filter(payment => payment.status === 'completed')
+      .filter(payment => payment.status === 'paid')
       .reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
     
     // Calculate total amount of pending payments
