@@ -12,7 +12,9 @@ import UserChart from './charts/UserChart';
 // Function to determine morning or afternoon
 const getGreeting = () => {
   const hours = new Date().getHours();
-  return hours < 12 ? 'Good Morning' : 'Good Afternoon';
+  if (hours < 12) return 'Good Morning';
+  if (hours < 18) return 'Good Afternoon';
+  return 'Good Evening';
 };
 
 // Header Component

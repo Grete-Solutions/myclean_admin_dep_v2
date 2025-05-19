@@ -157,7 +157,7 @@ const columns: ColumnDef<Pickup>[] = [
     accessorKey: "status",
     header: "status",
     cell: () => (
-      <Badge variant="destructive" className="flex items-center w-fit">
+      <Badge variant="expired" className="flex bord items-center w-fit">
         <X className="h-3 w-3 mr-1" />
         Expired
       </Badge>

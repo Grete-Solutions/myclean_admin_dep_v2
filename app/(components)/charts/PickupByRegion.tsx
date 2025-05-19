@@ -16,7 +16,7 @@ export const PickupsByRegion = () => {
     return (
       <Card className="overflow-hidden">
         <div className="flex justify-between items-center p-4">
-          <CardTitle className="text-lg">Pickups by Region</CardTitle>
+          <CardTitle className="text-lg">Pickups by Service Area</CardTitle>
           <div className="flex space-x-2">
             <button className="p-1">
               <span className="sr-only">Download</span>
