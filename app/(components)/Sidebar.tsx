@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Home, BarChart2, Settings, GitBranch, MapPin, User, Users, MessageSquare, Bell, HelpCircle, FileText, DollarSign, ChevronLeft, Shield, Sliders, Car, Globe, FileCheck, FileClock, FileX, Clock, FileTerminal, CheckCircle, Clock3, Star, Wallet2, UserCheck, UserX, UserMinus, UserX2, Send, Mail, AlertCircle, BarChart, PieChart } from 'lucide-react';
+import { ChevronDown, ChevronRight, Home, BarChart2, Settings, GitBranch, MapPin, User, Users, MessageSquare, Bell, HelpCircle, FileText, DollarSign, ChevronLeft, Shield, Sliders, Car, Globe, FileCheck, FileClock, FileX, Clock, FileTerminal, CheckCircle, Clock3, Star, Wallet2, UserCheck, UserX, UserMinus, UserX2, Send, Mail, AlertCircle, BarChart, PieChart, Menu } from 'lucide-react';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
@@ -13,7 +13,7 @@ interface SubMenuItem {
 
 interface MenuItem {
   title: string;
-  path?: string; // Made optional since it's not needed for items with submenu
+  path?: string;
   icon: React.ReactNode;
   submenu?: boolean;
   subMenuItems?: SubMenuItem[];
@@ -32,16 +32,16 @@ const SIDENAV_ITEMS: NavGroup[] = [
       {
         title: 'Dashboard',
         path: '/',
-        icon: <Home size={20} />,
+        icon: <Home size={18} />,
       },
       {
         title: 'Analytics',
         path: '/analytics',
-        icon: <BarChart2 size={20} />,
+        icon: <BarChart2 size={18} />,
       }, 
       {
         title: 'Configurations',
-        icon: <Settings size={20} />,
+        icon: <Settings size={18} />,
         submenu: true,
         subMenuItems: [
           { title: 'Privileges', path: '/configurations/privileges', icon: <Shield size={16} /> },
@@ -55,7 +55,7 @@ const SIDENAV_ITEMS: NavGroup[] = [
     menuList: [
       {
         title: 'Master Data',
-        icon: <GitBranch size={20} />,
+        icon: <GitBranch size={18} />,
         submenu: true,
         subMenuItems: [
           { title: 'Vehicle Make', path: '/master-data/vehicle-make', icon: <Car size={16} /> },
@@ -66,16 +66,16 @@ const SIDENAV_ITEMS: NavGroup[] = [
       {
         title: 'Service Locations',
         path: '/service-locations',
-        icon: <MapPin size={20} />,
+        icon: <MapPin size={18} />,
       },
       {
         title: 'Admins',
         path: '/admin',
-        icon: <User size={20} />,
+        icon: <User size={18} />,
       },
       {
         title: 'Pickup Requests',
-        icon: <FileText size={20} />,
+        icon: <FileText size={18} />,
         submenu: true,
         subMenuItems: [
           { title: 'Completed Pickups', path: '/pickup-requests/completed-pickups', icon: <FileCheck size={16} /> },
@@ -87,7 +87,7 @@ const SIDENAV_ITEMS: NavGroup[] = [
       },
       {
         title: 'Manage Drivers',
-        icon: <Users size={20} />,
+        icon: <Users size={18} />,
         submenu: true,
         subMenuItems: [
           { title: 'Approved Drivers', path: '/manage-drivers/approved-drivers', icon: <CheckCircle size={16} /> },
@@ -98,7 +98,7 @@ const SIDENAV_ITEMS: NavGroup[] = [
       },
       {
         title: 'Manage Users',
-        icon: <User size={20} />,
+        icon: <User size={18} />,
         submenu: true,
         subMenuItems: [
           { title: 'Users', path: '/manage-users/users', icon: <UserCheck size={16} /> },
@@ -115,11 +115,11 @@ const SIDENAV_ITEMS: NavGroup[] = [
       {
         title: 'Chat',
         path: '/chat',
-        icon: <MessageSquare size={20} />,
+        icon: <MessageSquare size={18} />,
       },
       {
         title: 'Notification',
-        icon: <Bell size={20} />,
+        icon: <Bell size={18} />,
         submenu: true,
         subMenuItems: [
           { title: 'Push Notifications', path: '/notification/push-notifications', icon: <Send size={16} /> },
@@ -129,11 +129,11 @@ const SIDENAV_ITEMS: NavGroup[] = [
       {
         title: 'Promo Code',
         path: '/promo-code',
-        icon: <DollarSign size={20} />,
+        icon: <DollarSign size={18} />,
       },
       {
         title: 'Complaints',
-        icon: <HelpCircle size={20} />,
+        icon: <HelpCircle size={18} />,
         submenu: true,
         subMenuItems: [
           { title: 'User Complaint', path: '/complaints/user-complaint', icon: <AlertCircle size={16} /> },
@@ -142,7 +142,7 @@ const SIDENAV_ITEMS: NavGroup[] = [
       },
       {
         title: 'Reports',
-        icon: <FileText size={20} />,
+        icon: <FileText size={18} />,
         submenu: true,
         subMenuItems: [
           { title: 'User Report', path: '/reports/user-report', icon: <BarChart size={16} /> },
@@ -159,14 +159,28 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = () => {
-  const [isOpen, setIsOpen] = useState<boolean>(true);
+  const [isOpen, setIsOpen] = useState<boolean>(false); // Start collapsed on mobile
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
-  // To track which submenu is open in collapsed mode
   const [collapsedOpenMenu, setCollapsedOpenMenu] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+
+  // Handle responsive behavior
+  React.useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        setIsOpen(false); // Always start collapsed on mobile
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
  
   const toggleSidebar = (): void => {
     setIsOpen(!isOpen);
-    // Clear any open collapsed submenus when expanding
     setCollapsedOpenMenu(null);
   };
 
@@ -200,159 +214,309 @@ const Sidebar: React.FC<SidebarProps> = () => {
   };
 
   return (
-    <div className="flex">
-      {/* Sidebar */}
-      <div 
-        className={`
-          h-screen bg-white font-medium shadow-lg transition-all duration-300 flex-shrink-0 relative
-          ${isOpen ? 'w-64' : 'w-20'}
-        `}
-      >
-        <div className="flex h-16 justify-between items-center p-4 border-b border-gray-200">
+    <>
+      {/* Mobile overlay */}
+      {isMobile && isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+      
+      <div className="flex">
+        {/* Sidebar */}
+        <div 
+          className={`
+            h-screen bg-gradient-to-b from-slate-50 to-white border-r border-slate-200/60 transition-all duration-300 flex-shrink-0 relative backdrop-blur-sm z-50
+            ${isMobile 
+              ? `fixed left-0 top-0 ${isOpen ? 'w-72 translate-x-0' : 'w-16 -translate-x-full lg:translate-x-0'}` 
+              : `${isOpen ? 'w-72' : 'w-16'}`
+            }
+          `}
+        >
+        {/* Header */}
+        <div className={`flex h-16 items-center border-b border-slate-200/60 bg-white/80 backdrop-blur-sm ${
+          isOpen ? 'justify-between px-4' : 'justify-center px-2'
+        }`}>
           {isOpen ? (
-            <Image src={'/a1.png'} width={35} height={80} alt="" className="w-12 mx-3.5 min-h-fit"/>
+            <>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8  rounded-lg flex items-center justify-center shadow-sm">
+                  <Image src={'/a1.png'} width={20} height={20} alt="" className="w-5"/>
+                </div>
+                <div className="hidden sm:block">
+                  <h1 className="font-semibold text-slate-800 text-sm">Admin Portal</h1>
+                  <p className="text-xs text-slate-500">Management Dashboard</p>
+                </div>
+              </div>
+              <button 
+                onClick={toggleSidebar} 
+                className="p-2 rounded-lg hover:bg-slate-100 transition-all duration-200 group"
+              >
+                <ChevronLeft size={16} className="text-slate-600 group-hover:text-slate-800" />
+              </button>
+            </>
           ) : (
-            <span></span>
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-8 h-8  rounded-lg flex items-center justify-center shadow-lg">
+                <Image src={'/a1.png'} width={16} height={16} alt="" className="w-4"/>
+              </div>
+              <button 
+                onClick={toggleSidebar} 
+                className="p-1.5 rounded-lg hover:bg-slate-100 transition-all duration-200 group"
+              >
+                <Menu size={14} className="text-slate-600 group-hover:text-slate-800" />
+              </button>
+            </div>
           )}
-          <button onClick={toggleSidebar} className="p-1 rounded-full hover:bg-gray-200 focus:outline-none transition-colors">
-            {isOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-          </button>
         </div>
         
-        <div className="overflow-y-auto h-[calc(100vh-4rem)]">
+        <div className="overflow-y-auto h-[calc(100vh-4rem)] scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-transparent">
           {isOpen ? (
             // Full sidebar content
-            SIDENAV_ITEMS.map((group, groupIndex) => (
-              <div key={groupIndex} className="mt-4">
-                <h2 className="px-4 py-2 text-xs uppercase text-gray-400 font-semibold">
-                  {group.title}
-                </h2>
-                
-                <ul>
-                  {group.menuList.map((item, itemIndex) => (
-                    <li key={itemIndex} className="px-2 py-1">
-                      {item.submenu ? (
-                        <div>
-                          <button 
-                            className={`flex items-center justify-between w-full px-4 py-3 hover:bg-[#0A8791] hover:text-white transition-colors rounded-lg
-                            ${isActiveParent(item) ? 'bg-[#0A8791] text-white' : ''}`}
-                            onClick={() => toggleSubmenu(item.title)}
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className={`${isActiveParent(item) ? 'text-white' : 'text-gray-400'}`}>{item.icon}</span>
-                              <span>{item.title}</span>
-                            </div>
-                            {openMenus[item.title] ? 
-                              <ChevronDown size={16} /> : 
-                              <ChevronRight size={16} />
-                            }
-                          </button>
-                          
-                          {openMenus[item.title] && item.subMenuItems && (
-                            <ul className="pl-10 pr-2 py-2">
-                              {item.subMenuItems.map((subItem, subIndex) => (
-                                <li key={subIndex} className="mb-1">
-                                  <a 
-                                    href={subItem.path}
-                                    className={`flex items-center py-2 px-4 rounded-lg hover:bg-[#0A8791] hover:text-white transition-colors
-                                    ${isActiveLink(subItem.path) ? 'bg-[#0A8791] text-white' : ''}`}
-                                  >
-                                    <span className={`mr-3 ${isActiveLink(subItem.path) ? 'text-white' : 'text-gray-400'}`}>
-                                      {subItem.icon}
-                                    </span>
-                                    <span>{subItem.title}</span>
-                                  </a>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      ) : (
-                        <a 
-                          href={item.path}
-                          className={`flex items-center px-4 py-3 hover:bg-[#0A8791] hover:text-white transition-colors gap-3 rounded-lg
-                          ${isActiveLink(item.path) ? 'bg-[#0A8791] text-white' : ''}`}
-                        >
-                          <span className={`${isActiveLink(item.path) ? 'text-white' : 'text-gray-400'}`}>{item.icon}</span>
-                          <span>{item.title}</span>
-                        </a>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))
-          ) : (
-            // Collapsed sidebar with icons and floating submenus
-            SIDENAV_ITEMS.map((group, groupIndex) => (
-              <div key={groupIndex} className="mt-4">
-                <div className="py-2 border-b border-gray-100 mx-2"></div>
-                <ul>
-                  {group.menuList.map((item, itemIndex) => (
-                    <li key={itemIndex} className="relative px-2 py-1">
-                      {item.submenu ? (
-                        <div>
-                          <button 
-                            onClick={() => toggleCollapsedSubmenu(item.title)}
-                            className={`flex justify-center w-full py-3 hover:bg-[#0A8791] hover:text-white transition-colors rounded-lg
-                            ${isActiveParent(item) || collapsedOpenMenu === item.title ? 'bg-[#0A8791]' : ''}`}
-                            title={item.title}
-                          >
-                            <span className={`${isActiveParent(item) || collapsedOpenMenu === item.title ? 'text-white' : 'text-gray-400'}`}>
-                              {item.icon}
-                            </span>
-                          </button>
-                          
-                          {/* Floating submenu for collapsed mode */}
-                          {collapsedOpenMenu === item.title && item.subMenuItems && (
-                            <div className="absolute left-full top-0 z-50 bg-white shadow-lg rounded-lg w-64 mt-1 ml-2 overflow-hidden">
-                              <div className="p-3 border-b border-gray-100 font-medium text-gray-700 bg-gray-50">
-                                <div className="flex items-center gap-3">
-                                  <span className="text-gray-500">{item.icon}</span>
-                                  <span>{item.title}</span>
+            <div className="p-3">
+              {SIDENAV_ITEMS.map((group, groupIndex) => (
+                <div key={groupIndex} className="mb-6">
+                  <div className="flex items-center gap-2 px-3 py-2 mb-3">
+                    <h2 className="text-xs uppercase text-slate-500 font-semibold tracking-wider">
+                      {group.title}
+                    </h2>
+                    <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent"></div>
+                  </div>
+                  
+                  <ul className="space-y-1">
+                    {group.menuList.map((item, itemIndex) => (
+                      <li key={itemIndex}>
+                        {item.submenu ? (
+                          <div>
+                            <button 
+                              className={`flex items-center justify-between w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative
+                              ${isActiveParent(item) 
+                                ? 'bg-gradient-to-r from-[#0A8791] to-[#0d9ba8] text-white shadow-md' 
+                                : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
+                              }`}
+                              onClick={() => toggleSubmenu(item.title)}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`p-1.5 rounded-lg transition-colors ${
+                                  isActiveParent(item) 
+                                    ? 'bg-white/20' 
+                                    : 'bg-slate-100 group-hover:bg-slate-200'
+                                }`}>
+                                  <span className={`${isActiveParent(item) ? 'text-white' : 'text-slate-600'}`}>
+                                    {item.icon}
+                                  </span>
                                 </div>
+                                <span className="font-medium">{item.title}</span>
                               </div>
-                              <ul className="p-2">
+                              <div className={`transition-transform duration-200 ${openMenus[item.title] ? 'rotate-180' : ''}`}>
+                                <ChevronDown size={14} className={isActiveParent(item) ? 'text-white' : 'text-slate-400'} />
+                              </div>
+                            </button>
+                            
+                            {openMenus[item.title] && item.subMenuItems && (
+                              <ul className="mt-2 ml-6 space-y-1 border-l-2 border-slate-100 pl-4">
                                 {item.subMenuItems.map((subItem, subIndex) => (
-                                  <li key={subIndex} className="mb-1">
+                                  <li key={subIndex}>
                                     <a 
                                       href={subItem.path}
-                                      className={`flex items-center py-2 px-4 rounded-lg hover:bg-[#0A8791] hover:text-white transition-colors
-                                      ${isActiveLink(subItem.path) ? 'bg-[#0A8791] text-white' : ''}`}
+                                      className={`flex items-center py-2 px-3 rounded-lg text-sm transition-all duration-200 group relative
+                                      ${isActiveLink(subItem.path) 
+                                        ? 'bg-gradient-to-r from-[#0A8791] to-[#0d9ba8] text-white shadow-sm' 
+                                        : 'hover:bg-slate-50 text-slate-600 hover:text-slate-800'
+                                      }`}
+                                      onClick={() => isMobile && setIsOpen(false)}
                                     >
-                                      <span className={`mr-3 ${isActiveLink(subItem.path) ? 'text-white' : 'text-gray-400'}`}>
+                                      <span className={`mr-3 ${isActiveLink(subItem.path) ? 'text-white' : 'text-slate-400'}`}>
                                         {subItem.icon}
                                       </span>
-                                      <span>{subItem.title}</span>
+                                      <span className="font-medium">{subItem.title}</span>
+                                      {isActiveLink(subItem.path) && (
+                                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full"></div>
+                                      )}
                                     </a>
                                   </li>
                                 ))}
                               </ul>
+                            )}
+                          </div>
+                        ) : (
+                          <a 
+                            href={item.path}
+                            className={`flex items-center px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative
+                            ${isActiveLink(item.path) 
+                              ? 'bg-gradient-to-r from-[#0A8791] to-[#0d9ba8] text-white shadow-md' 
+                              : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
+                            }`}
+                            onClick={() => isMobile && setIsOpen(false)}
+                          >
+                            <div className={`p-1.5 rounded-lg transition-colors mr-3 ${
+                              isActiveLink(item.path) 
+                                ? 'bg-white/20' 
+                                : 'bg-slate-100 group-hover:bg-slate-200'
+                            }`}>
+                              <span className={`${isActiveLink(item.path) ? 'text-white' : 'text-slate-600'}`}>
+                                {item.icon}
+                              </span>
                             </div>
-                          )}
-                        </div>
-                      ) : (
-                        <a 
-                          href={item.path}
-                          className={`flex justify-center py-3 hover:bg-[#0A8791] hover:text-white transition-colors rounded-lg
-                          ${isActiveLink(item.path) ? 'bg-[#0A8791]' : ''}`}
-                          title={item.title}
-                        >
-                          <span className={`${isActiveLink(item.path) ? 'text-white' : 'text-gray-400'}`}>
-                            {item.icon}
-                          </span>
-                        </a>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))
+                            <span className="font-medium">{item.title}</span>
+                            {isActiveLink(item.path) && (
+                              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full"></div>
+                            )}
+                          </a>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          ) : (
+            // Collapsed sidebar with icons only
+            <div className="py-2">
+              {SIDENAV_ITEMS.map((group, groupIndex) => (
+                <div key={groupIndex} className="mb-4">
+                  {/* Group separator line */}
+                  <div className="h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent mx-2 mb-3"></div>
+                  
+                  <div className="px-1 space-y-1">
+                    {group.menuList.map((item, itemIndex) => (
+                      <div key={itemIndex} className="relative group">
+                        {item.submenu ? (
+                          <>
+                            <button 
+                              onClick={() => toggleCollapsedSubmenu(item.title)}
+                              className={`flex items-center justify-center w-12 h-12 rounded-lg transition-all duration-200 relative mx-auto
+                              ${isActiveParent(item) 
+                                ? 'bg-gradient-to-r from-[#0A8791] to-[#0d9ba8] shadow-md' 
+                                : collapsedOpenMenu === item.title 
+                                  ? 'bg-slate-100 shadow-sm'
+                                  : 'hover:bg-slate-100 hover:shadow-sm'
+                              }`}
+                              title={item.title}
+                            >
+                              <span className={`transition-colors ${
+                                isActiveParent(item) 
+                                  ? 'text-white' 
+                                  : 'text-slate-600 group-hover:text-slate-800'
+                              }`}>
+                                {item.icon}
+                              </span>
+                              
+                              {/* Active indicator */}
+                              {isActiveParent(item) && (
+                                <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#0A8791] rounded-r-full"></div>
+                              )}
+                              
+                              {/* Submenu indicator */}
+                              <div className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center transition-all
+                                ${isActiveParent(item) || collapsedOpenMenu === item.title
+                                  ? 'bg-white shadow-sm' 
+                                  : 'bg-slate-200 group-hover:bg-slate-300'
+                                }`}>
+                                <ChevronRight size={8} className={`transition-transform ${
+                                  collapsedOpenMenu === item.title ? 'rotate-90' : ''
+                                } ${isActiveParent(item) ? 'text-[#0A8791]' : 'text-slate-500'}`} />
+                              </div>
+                            </button>
+                            
+                            {/* Floating submenu - responsive positioning */}
+                            {collapsedOpenMenu === item.title && item.subMenuItems && (
+                              <div className={`absolute z-[99999] bg-white/95 backdrop-blur-sm shadow-2xl rounded-xl w-64 overflow-hidden border border-slate-200/60
+                                ${isMobile 
+                                  ? 'left-16 top-0' 
+                                  : 'left-full top-0 ml-2'
+                                }`}>
+                                {/* Submenu header */}
+                                <div className="px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-slate-50/80 to-white/80">
+                                  <div className="flex items-center gap-2">
+                                    <div className="p-1.5 rounded-lg bg-[#0A8791]/10">
+                                      <span className="text-[#0A8791] text-sm">{item.icon}</span>
+                                    </div>
+                                    <div>
+                                      <span className="font-semibold text-slate-800 text-sm">{item.title}</span>
+                                      <p className="text-xs text-slate-500">Choose an option</p>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                {/* Submenu items */}
+                                <div className="p-2">
+                                  <ul className="space-y-1">
+                                    {item.subMenuItems.map((subItem, subIndex) => (
+                                      <li key={subIndex}>
+                                        <a 
+                                          href={subItem.path}
+                                          className={`flex items-center py-2.5 px-3 rounded-lg text-sm transition-all duration-200 group
+                                          ${isActiveLink(subItem.path) 
+                                            ? 'bg-gradient-to-r from-[#0A8791] to-[#0d9ba8] text-white shadow-md' 
+                                            : 'hover:bg-slate-50 text-slate-600 hover:text-slate-800'
+                                          }`}
+                                          onClick={() => isMobile && setIsOpen(false)}
+                                        >
+                                          <div className={`p-1 rounded-lg mr-3 transition-colors ${
+                                            isActiveLink(subItem.path) 
+                                              ? 'bg-white/20' 
+                                              : 'bg-slate-100 group-hover:bg-slate-200'
+                                          }`}>
+                                            <span className={`${isActiveLink(subItem.path) ? 'text-white' : 'text-slate-500'}`}>
+                                              {subItem.icon}
+                                            </span>
+                                          </div>
+                                          <span className="font-medium">{subItem.title}</span>
+                                        </a>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <a 
+                            href={item.path}
+                            className={`flex items-center justify-center w-12 h-12 rounded-lg transition-all duration-200 relative mx-auto
+                            ${isActiveLink(item.path) 
+                              ? 'bg-gradient-to-r from-[#0A8791] to-[#0d9ba8] shadow-md' 
+                              : 'hover:bg-slate-100 hover:shadow-sm'
+                            }`}
+                            title={item.title}
+                            onClick={() => isMobile && setIsOpen(false)}
+                          >
+                            <span className={`transition-colors ${
+                              isActiveLink(item.path) 
+                                ? 'text-white' 
+                                : 'text-slate-600 group-hover:text-slate-800'
+                            }`}>
+                              {item.icon}
+                            </span>
+                            
+                            {/* Active indicator */}
+                            {isActiveLink(item.path) && (
+                              <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#0A8791] rounded-r-full"></div>
+                            )}
+                          </a>
+                        )}
+                        
+                        {/* Tooltip on hover - hide on mobile */}
+                        {!isMobile && (
+                          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-2 py-1 bg-slate-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-40">
+                            {item.title}
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 w-2 h-2 bg-slate-800 rotate-45"></div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
     </div>
-  );
-};
+</>
+  )
+}
 
 export default Sidebar;

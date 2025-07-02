@@ -37,7 +37,7 @@ import { NextAuthOptions } from "next-auth";
         try {
           console.log("Fetching user from backend... with id token", token);
           const resUser = await fetch(
-            `https://myclean-backend-v2.onrender.com/admin/get?email=${credentials.email}`,
+            `https://myclean-backend-v2-775492522781.europe-west1.run.app/admin/get?email=${credentials.email}`,
             {
               method: "GET",
               headers: {
@@ -95,6 +95,8 @@ import { NextAuthOptions } from "next-auth";
         session.user.displayName = token.displayName as string;
         session.idToken = token.idToken as string; // Make the token available in the session
       }
+            console.log('Final session data:', session);
+
       return session;
     },
   },

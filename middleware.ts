@@ -2,45 +2,56 @@
 import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { NextRequestWithAuth } from "next-auth/middleware";
 
-// Custom middleware function
-export default async function middleware(req: NextRequestWithAuth) {
-  const token = await getToken({ req });
-  const isAuthenticated = !!token?.idToken;
-  const isLoginPage = req.nextUrl.pathname === "/login";
+export default withAuth(
+  async function middleware(req) {
+    const token = await getToken({ req });
+    const isAuthenticated = !!token;
+    const isLoginPage = req.nextUrl.pathname === "/login";
 
-  // If user is not authenticated and trying to access a protected route
-  if (!isAuthenticated && !isLoginPage) {
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
+    console.log('Middleware - Path:', req.nextUrl.pathname);
+    console.log('Middleware - Token exists:', !!token);
+    console.log('Middleware - Is login page:', isLoginPage);
 
-  // If user is authenticated and trying to access login page
-  if (isAuthenticated && isLoginPage) {
-    return NextResponse.redirect(new URL("/", req.url));
-  }
+    // If user is not authenticated and trying to access a protected route
+    if (!isAuthenticated && !isLoginPage) {
+      console.log('Redirecting to login - not authenticated');
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
 
-  // For all other cases, just continue to the page
-  return NextResponse.next();
-}
+    // If user is authenticated and trying to access login page
+    if (isAuthenticated && isLoginPage) {
+      console.log('Redirecting to home - already authenticated');
+      return NextResponse.redirect(new URL("/", req.url));
+    }
 
-// Add withAuth as a separate export if you need its functionality
-export const authMiddleware = withAuth({
-  pages: {
-    signIn: "/login",
+    // For all other cases, continue
+    return NextResponse.next();
   },
-});
+  {
+    callbacks: {
+      authorized: () => {
+        // Let the main middleware function handle all the authorization logic
+        return true;
+      },
+    },
+    pages: {
+      signIn: "/login",
+    },
+  }
+);
 
-// Protect all routes except /login and public assets
-// Protect all routes except /login/** and API routes
+// More specific matcher - exclude NextAuth internal routes
 export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - /login (any path under login directory)
-     * - /api (any API routes)
+     * - /login (login page)
+     * - /api/auth (NextAuth API routes)
+     * - /api (other API routes)
      * - /_next (Next.js internals)
      * - /images, /fonts, etc. (public assets)
+     * - . files (dotfiles)
      */
     '/((?!login/|api/|_next/|images/|fonts/|favicon.ico).*)',
   ],
