@@ -23,5 +23,9 @@ export async function GET(request: NextRequest) {
 
   const product = await res.json();
   console.log('Product:', product); // Log product to check if it's retrieved successfully
-  return Response.json( product );
-}
+return new Response(JSON.stringify(product), {
+  headers: {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+  },
+});}

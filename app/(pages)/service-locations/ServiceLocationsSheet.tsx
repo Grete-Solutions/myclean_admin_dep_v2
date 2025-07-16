@@ -26,6 +26,16 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import dynamic from 'next/dynamic';
 
+// Define the bin type interface
+interface BinType {
+  binType: string;
+  capacity: number;
+  price: number;
+  equivalentBags: string;
+  isActive: boolean;
+  imageUrl: string;
+}
+
 // Define the types for the service location
 interface ServiceLocation {
   city: string;
@@ -34,6 +44,8 @@ interface ServiceLocation {
   countryISOCode: string;
   commission: number;
   coordinates: [number, number][];
+  bins: BinType[];
+  radius: number;
 }
 
 // Define the form values type
@@ -43,6 +55,8 @@ interface ServiceLocationFormValues {
   isActive: boolean;
   countryISOCode: string;
   commission: number;
+  bins: string;
+  radius: number;
 }
 
 // Dynamically import the map components with no SSR
@@ -75,6 +89,8 @@ const ServiceLocationSheet: React.FC = () => {
       isActive: true,
       countryISOCode: 'GH', // Ghana's ISO code
       commission: 0,
+      bins: '',
+      radius: 0,
     },
   });
 
@@ -86,9 +102,37 @@ const ServiceLocationSheet: React.FC = () => {
 
     setIsSubmitting(true);
     
+    // Parse bins from comma-separated string and create bin objects
+    const binTypes = data.bins
+      .split(',')
+      .map(bin => bin.trim())
+      .filter(bin => bin.length > 0);
+
+    if (binTypes.length === 0) {
+      alert('Please provide at least one bin type');
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Create bin objects with default values
+    const binsArray: BinType[] = binTypes.map(binType => ({
+      binType: binType,
+      capacity: binType === 'mini' ? 12 : binType === 'standard' ? 17892 : 100,
+      price: data.price,
+      equivalentBags: "Equivalent to 2 extra-large polythene bags",
+      isActive: true,
+      imageUrl: "https://example.com/images/default-bin.jpg"
+    }));
+
     // Create service locations for each defined polygon
     const serviceLocations: ServiceLocation[] = activePolygons.map(polygon => ({
-      ...data,
+      city: data.city,
+      price: data.price,
+      isActive: data.isActive,
+      countryISOCode: data.countryISOCode,
+      commission: data.commission,
+      bins: binsArray,
+      radius: data.radius,
       coordinates: polygon
     }));
 
@@ -242,6 +286,50 @@ const ServiceLocationSheet: React.FC = () => {
                           onChange={(e) => field.onChange(parseFloat(e.target.value))} 
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="radius"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Radius (km)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          placeholder="0" 
+                          {...field} 
+                          onChange={(e) => field.onChange(parseFloat(e.target.value))} 
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Service radius in kilometers
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="bins"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bin Types</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="mini, standard, large" 
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Comma-separated bin types (e.g., mini, standard, large)
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
