@@ -68,7 +68,7 @@ type ServiceLocation = {
   commission: number | null;
 coordinates?: { _latitude: number; _longitude: number }[]
   radius?: number;
-  bins: Bin
+  bins: Bin[]
   createdAt: {
     _seconds: number;
     _nanoseconds: number;
@@ -246,8 +246,10 @@ function ServiceDataTable({
       accessorKey: "bins",
       header: "Bins",
       cell: ({ row }) => (
-        <div>
-          {row.original.bins ? `${row.original.bins.binType} bins` : "No bins"}
+   <div>
+          {row.original.bins && row.original.bins.length > 0
+            ? `${row.original.bins.length} bin${row.original.bins.length === 1 ? "" : "s"}`
+            : "No bins"}
         </div>
       ),
     },
