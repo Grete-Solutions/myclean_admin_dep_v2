@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +22,8 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { X, Plus } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -55,7 +58,6 @@ interface ServiceLocationFormValues {
   isActive: boolean;
   countryISOCode: string;
   commission: number;
-  bins: string;
   radius: number;
 }
 
@@ -72,6 +74,7 @@ const ServiceLocationSheet: React.FC = () => {
   const [activePolygons, setActivePolygons] = useState<[number, number][][]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [bins, setBins] = useState<BinType[]>([]);
   
   // Ghana's center coordinates
   const ghanaCenterLat = 7.9465;
@@ -89,10 +92,34 @@ const ServiceLocationSheet: React.FC = () => {
       isActive: true,
       countryISOCode: 'GH', // Ghana's ISO code
       commission: 0,
-      bins: '',
       radius: 0,
     },
   });
+
+  // Add new bin
+  const addBin = () => {
+    const newBin: BinType = {
+      binType: '',
+      capacity: 0,
+      price: 0,
+      equivalentBags: '',
+      isActive: true,
+      imageUrl: ''
+    };
+    setBins([...bins, newBin]);
+  };
+
+  // Remove bin
+  const removeBin = (index: number) => {
+    setBins(bins.filter((_, i) => i !== index));
+  };
+
+  // Update bin
+  const updateBin = (index: number, field: keyof BinType, value: any) => {
+    const updatedBins = [...bins];
+    updatedBins[index] = { ...updatedBins[index], [field]: value };
+    setBins(updatedBins);
+  };
 
   async function onSubmit(data: ServiceLocationFormValues) {
     if (activePolygons.length === 0) {
@@ -100,29 +127,21 @@ const ServiceLocationSheet: React.FC = () => {
       return;
     }
 
-    setIsSubmitting(true);
-    
-    // Parse bins from comma-separated string and create bin objects
-    const binTypes = data.bins
-      .split(',')
-      .map(bin => bin.trim())
-      .filter(bin => bin.length > 0);
-
-    if (binTypes.length === 0) {
-      alert('Please provide at least one bin type');
-      setIsSubmitting(false);
+    if (bins.length === 0) {
+      alert('Please add at least one bin type');
       return;
     }
 
-    // Create bin objects with default values
-    const binsArray: BinType[] = binTypes.map(binType => ({
-      binType: binType,
-      capacity: binType === 'mini' ? 12 : binType === 'standard' ? 17892 : 100,
-      price: data.price,
-      equivalentBags: "Equivalent to 2 extra-large polythene bags",
-      isActive: true,
-      imageUrl: "https://example.com/images/default-bin.jpg"
-    }));
+    // Validate bins
+    for (let i = 0; i < bins.length; i++) {
+      const bin = bins[i];
+      if (!bin.binType || !bin.capacity || !bin.price || !bin.equivalentBags) {
+        alert(`Please fill in all required fields for bin ${i + 1}`);
+        return;
+      }
+    }
+
+    setIsSubmitting(true);
 
     // Create service locations for each defined polygon
     const serviceLocations: ServiceLocation[] = activePolygons.map(polygon => ({
@@ -131,7 +150,7 @@ const ServiceLocationSheet: React.FC = () => {
       isActive: data.isActive,
       countryISOCode: data.countryISOCode,
       commission: data.commission,
-      bins: binsArray,
+      bins: bins,
       radius: data.radius,
       coordinates: polygon
     }));
@@ -152,6 +171,7 @@ const ServiceLocationSheet: React.FC = () => {
       form.reset();
       setCoordinates([]);
       setActivePolygons([]);
+      setBins([]);
       setIsOpen(false);
     } catch (error) {
       console.error('Error submitting service location:', error);
@@ -201,6 +221,102 @@ const ServiceLocationSheet: React.FC = () => {
             </div>
           </div>
         )}
+      </div>
+    );
+  };
+
+  // Component to manage bins
+  const BinManager: React.FC = () => {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-medium">Bin Types</h3>
+          <Button type="button" onClick={addBin} size="sm" className="flex items-center gap-1">
+            <Plus size={16} />
+            Add Bin
+          </Button>
+        </div>
+        
+        {bins.length === 0 && (
+          <p className="text-sm text-gray-500">No bins added yet. Click Add Bin to get started.</p>
+        )}
+        
+        {bins.map((bin, index) => (
+          <Card key={index} className="relative">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm">Bin {index + 1}</CardTitle>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeBin(index)}
+                  className="h-6 w-6 p-0"
+                >
+                  <X size={14} />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium">Bin Type</label>
+                  <Input
+                    placeholder="e.g., mini, standard"
+                    value={bin.binType}
+                    onChange={(e) => updateBin(index, 'binType', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Capacity</label>
+                  <Input
+                    type="number"
+                    placeholder="0"
+                    value={bin.capacity}
+                    onChange={(e) => updateBin(index, 'capacity', parseInt(e.target.value) || 0)}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium">Price</label>
+                  <Input
+                    type="number"
+                    placeholder="0.00"
+                    value={bin.price}
+                    onChange={(e) => updateBin(index, 'price', parseFloat(e.target.value) || 0)}
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    checked={bin.isActive}
+                    onCheckedChange={(checked) => updateBin(index, 'isActive', checked)}
+                  />
+                  <label className="text-sm font-medium">Active</label>
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">Equivalent Bags</label>
+                <Input
+                  placeholder="e.g., Equivalent to 2 extra-large polythene bags"
+                  value={bin.equivalentBags}
+                  onChange={(e) => updateBin(index, 'equivalentBags', e.target.value)}
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">Image URL</label>
+                <Input
+                  placeholder="https://example.com/images/bin.jpg"
+                  value={bin.imageUrl}
+                  onChange={(e) => updateBin(index, 'imageUrl', e.target.value)}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     );
   };
@@ -292,49 +408,27 @@ const ServiceLocationSheet: React.FC = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="radius"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Radius (km)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          placeholder="0" 
-                          {...field} 
-                          onChange={(e) => field.onChange(parseFloat(e.target.value))} 
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Service radius in kilometers
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="bins"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Bin Types</FormLabel>
-                      <FormControl>
-                        <Input 
-                          placeholder="mini, standard, large" 
-                          {...field} 
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Comma-separated bin types (e.g., mini, standard, large)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="radius"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Radius (km)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="0" 
+                        {...field} 
+                        onChange={(e) => field.onChange(parseFloat(e.target.value))} 
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Service radius in kilometers
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               
               <FormField
                 control={form.control}
@@ -356,6 +450,8 @@ const ServiceLocationSheet: React.FC = () => {
                   </FormItem>
                 )}
               />
+              
+              <BinManager />
               
               <div className="h-64 md:h-80 border rounded-lg overflow-hidden">
                 {isClient && (
@@ -395,7 +491,7 @@ const ServiceLocationSheet: React.FC = () => {
                   </SheetClose>
                   <Button 
                     type="submit" 
-                    disabled={isSubmitting || activePolygons.length === 0}
+                    disabled={isSubmitting || activePolygons.length === 0 || bins.length === 0}
                   >
                     {isSubmitting ? "Saving..." : "Save"}
                   </Button>
@@ -407,7 +503,7 @@ const ServiceLocationSheet: React.FC = () => {
         <SheetFooter className="flex justify-between">
           <div>
             <p className="text-sm text-gray-500">
-              Defined areas: {activePolygons.length} 
+              Defined areas: {activePolygons.length} | Bins: {bins.length}
               {activePolygons.length > 0 ? 
                 ` (${activePolygons.length < 3 ? 'minimum 3 recommended' : 'sufficient'})` : 
                 ' (none defined yet)'}

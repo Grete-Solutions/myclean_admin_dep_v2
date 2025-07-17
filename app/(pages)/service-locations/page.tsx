@@ -14,6 +14,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import { ChevronDown, Edit, Trash2, MoreHorizontal } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -47,10 +48,7 @@ import {
 import { toast } from "sonner"
 import ServiceLocationsSheet from "./ServiceLocationsSheet"
 
-type Coordinate = {
-  _latitude: number;
-  _longitude: number;
-};
+
 
 type Bin = {
   binType: string;
@@ -68,9 +66,9 @@ type ServiceLocation = {
   isActive: boolean;
   countryISOCode: string;
   commission: number | null;
-  coordinates?: Coordinate;
-  bins?: Bin[];
+coordinates?: { _latitude: number; _longitude: number }[]
   radius?: number;
+  bins: Bin
   createdAt: {
     _seconds: number;
     _nanoseconds: number;
@@ -80,15 +78,14 @@ type ServiceLocation = {
 // Actions component for each row
 function Actions({ 
   service, 
-  onDelete, 
-  onEdit 
+  onDelete 
 }: { 
   service: ServiceLocation;
   onDelete: (id: string) => Promise<void>;
-  onEdit: (service: ServiceLocation) => void;
 }) {
   const [isDeleting, setIsDeleting] = React.useState(false);
-
+  const router = useRouter();
+  
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
@@ -101,6 +98,10 @@ function Actions({
     }
   };
 
+  const handleEdit = () => {
+    router.push(`/service-locations/edit?id=${service.id}`);
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -110,7 +111,7 @@ function Actions({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => onEdit(service)}>
+        <DropdownMenuItem onClick={handleEdit}>
           <Edit className="mr-2 h-4 w-4" />
           Edit
         </DropdownMenuItem>
@@ -150,12 +151,10 @@ function Actions({
 
 function ServiceDataTable({ 
   data, 
-  onDelete, 
-  onEdit 
+  onDelete 
 }: { 
   data: ServiceLocation[];
   onDelete: (id: string) => Promise<void>;
-  onEdit: (service: ServiceLocation) => void;
 }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -222,11 +221,13 @@ function ServiceDataTable({
       accessorKey: "coordinates",
       header: "Coordinates",
       cell: ({ row }) => {
-        const coordinates = row.original.coordinates;
+        const coordinates = row.original.coordinates
         return (
           <div>
-            {coordinates && coordinates._latitude != null && coordinates._longitude != null
-              ? `${coordinates._latitude.toFixed(4)}, ${coordinates._longitude.toFixed(4)}`
+            {coordinates && coordinates.length > 0
+              ? coordinates
+                  .map((coord) => `[${coord._latitude.toFixed(4)}, ${coord._longitude.toFixed(4)}]`)
+                  .join(", ")
               : "No coordinates"}
           </div>
         );
@@ -246,7 +247,7 @@ function ServiceDataTable({
       header: "Bins",
       cell: ({ row }) => (
         <div>
-          {row.original.bins ? `${row.original.bins.length} bins` : "No bins"}
+          {row.original.bins ? `${row.original.bins.binType} bins` : "No bins"}
         </div>
       ),
     },
@@ -257,7 +258,6 @@ function ServiceDataTable({
         <Actions 
           service={row.original} 
           onDelete={onDelete}
-          onEdit={onEdit}
         />
       ),
       enableSorting: false,
@@ -415,7 +415,7 @@ export default function ServicePage() {
     }
   };
 
-const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string) => {
     const response = await fetch(`/api/DELETE/serviceLocation?id=${id}`, {
       method: 'DELETE',
       headers: {
@@ -433,16 +433,6 @@ const handleDelete = async (id: string) => {
 
     // Refresh the services list after successful deletion
     setServices(prevServices => prevServices.filter(service => service.id !== id));
-  };
-
-  const handleEdit = (service: ServiceLocation) => {
-    // You can implement your edit logic here
-    // For example, open a modal or navigate to an edit page
-    console.log('Edit service:', service);
-    
-    // Example: You might want to open a modal or navigate to an edit page
-    // For now, we'll just log the service to be edited
-    // You can replace this with your actual edit implementation
   };
   
   React.useEffect(() => {
@@ -464,7 +454,6 @@ const handleDelete = async (id: string) => {
         <ServiceDataTable 
           data={services} 
           onDelete={handleDelete}
-          onEdit={handleEdit}
         />
       )}
     </div>

@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     return Response.json({ error: 'No token found' }, { status: 401 });
   }
   
-  const res = await fetch(`${process.env.URLB}/location/get?isDeleted=${false}`, {
+  const res = await fetch(`${process.env.URLB}/systemSettings/getSystemSettings`, {
     cache: 'no-cache',
     headers: {
       'Content-Type': 'application/json',
