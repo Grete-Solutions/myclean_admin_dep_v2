@@ -42,7 +42,7 @@ type ServiceLocation = {
   }
 }
 
-export default function EditServiceLocationPage() {
+export default function EditServiceLocationContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const serviceId = searchParams.get("id")
@@ -52,7 +52,6 @@ export default function EditServiceLocationPage() {
   const [saving, setSaving] = React.useState<boolean>(false)
   const [error, setError] = React.useState<string | null>(null)
   const [isMapSheetOpen, setIsMapSheetOpen] = React.useState(false)
-
   const [formData, setFormData] = React.useState<{
     city: string
     price: number
@@ -117,11 +116,9 @@ export default function EditServiceLocationPage() {
             Add Bin
           </Button>
         </div>
-
         {formData.bins.length === 0 && (
           <p className="text-sm text-gray-500">No bins added yet. Click Add Bin to get started.</p>
         )}
-
         {formData.bins.map((bin, index) => (
           <Card key={index} className="relative">
             <CardHeader className="pb-2">
@@ -158,7 +155,6 @@ export default function EditServiceLocationPage() {
                   />
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-sm font-medium">Price</Label>
@@ -174,7 +170,6 @@ export default function EditServiceLocationPage() {
                   <Label className="text-sm font-medium">Active</Label>
                 </div>
               </div>
-
               <div>
                 <Label className="text-sm font-medium">Equivalent Bags</Label>
                 <Input
@@ -183,7 +178,6 @@ export default function EditServiceLocationPage() {
                   onChange={(e) => updateBin(index, "equivalentBags", e.target.value)}
                 />
               </div>
-
               <div>
                 <Label className="text-sm font-medium">Image URL</Label>
                 <Input
@@ -199,148 +193,148 @@ export default function EditServiceLocationPage() {
     )
   }
 
-// Fixed handleSubmit function with correct coordinate format
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault()
-  
-  console.log("🔍 Form submission started")
-  console.log("📋 Form data:", formData)
-  console.log("🆔 Service ID:", serviceId)
+  // Fixed handleSubmit function with correct coordinate format
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
 
-  // Validation
-  if (!formData.city.trim()) {
-    toast.error("City is required")
-    return
-  }
+    console.log("🔍 Form submission started")
+    console.log("📋 Form data:", formData)
+    console.log("🆔 Service ID:", serviceId)
 
-  if (!formData.countryISOCode.trim()) {
-    toast.error("Country ISO Code is required")
-    return
-  }
-
-  if (formData.price <= 0) {
-    toast.error("Price must be greater than 0")
-    return
-  }
-
-  // Basic validation for bins
-  if (formData.bins.length === 0) {
-    toast.error("Please add at least one bin type.")
-    return
-  }
-
-  for (const [index, bin] of formData.bins.entries()) {
-    if (!bin.binType.trim()) {
-      toast.error(`Bin ${index + 1}: Bin type is required`)
+    // Validation
+    if (!formData.city.trim()) {
+      toast.error("City is required")
       return
     }
-    if (!bin.capacity || bin.capacity <= 0) {
-      toast.error(`Bin ${index + 1}: Capacity must be greater than 0`)
+
+    if (!formData.countryISOCode.trim()) {
+      toast.error("Country ISO Code is required")
       return
     }
-    if (!bin.price || bin.price <= 0) {
-      toast.error(`Bin ${index + 1}: Price must be greater than 0`)
+
+    if (formData.price <= 0) {
+      toast.error("Price must be greater than 0")
       return
     }
-    if (!bin.equivalentBags.trim()) {
-      toast.error(`Bin ${index + 1}: Equivalent bags description is required`)
+
+    // Basic validation for bins
+    if (formData.bins.length === 0) {
+      toast.error("Please add at least one bin type.")
       return
     }
-  }
 
-  // Validate coordinates - API expects at least 3 points
-  if (formData.coordinates.length < 3) {
-    toast.error("Please define a service area with at least 3 coordinate points")
-    return
-  }
-
-  if (!serviceId) {
-    toast.error("Service ID is missing")
-    return
-  }
-
-  // ✅ FIXED: Send coordinates as [number, number][] format (what API expects)
-  // NOT as objects with _latitude and _longitude properties
-  const payload = {
-    city: formData.city,
-    price: formData.price,
-    isActive: formData.isActive,
-    countryISOCode: formData.countryISOCode,
-    commission: formData.commission,
-    radius: formData.radius,
-    coordinates: formData.coordinates, // Send as [number, number][] directly
-    bins: formData.bins,
-  }
-
-  try {
-    setSaving(true)
-    console.log("📤 Sending to:", `/api/PUT/serviceLocation?id=${serviceId}`)
-    console.log("📤 Payload:", JSON.stringify(payload, null, 2))
-
-    const response = await fetch(`/api/PUT/serviceLocation?id=${serviceId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    })
-
-    console.log("📨 Response status:", response.status)
-    console.log("📨 Response ok:", response.ok)
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
-      console.error("❌ Error response:", errorData)
-      throw new Error(errorData.error || errorData.message || `Failed to update service location: ${response.status}`)
+    for (const [index, bin] of formData.bins.entries()) {
+      if (!bin.binType.trim()) {
+        toast.error(`Bin ${index + 1}: Bin type is required`)
+        return
+      }
+      if (!bin.capacity || bin.capacity <= 0) {
+        toast.error(`Bin ${index + 1}: Capacity must be greater than 0`)
+        return
+      }
+      if (!bin.price || bin.price <= 0) {
+        toast.error(`Bin ${index + 1}: Price must be greater than 0`)
+        return
+      }
+      if (!bin.equivalentBags.trim()) {
+        toast.error(`Bin ${index + 1}: Equivalent bags description is required`)
+        return
+      }
     }
-    
-    const result = await response.json()
-    console.log("✅ Update success:", result)
 
-    toast.success("Service location updated successfully")
-    router.push("/service-locations")
-  } catch (error) {
-    console.error("💥 Error updating service location:", error)
-    toast.error(`Failed to update service location: ${(error as Error).message}`)
-  } finally {
-    setSaving(false)
-  }
-}
-
-// Also need to fix the coordinate transformation when fetching data
-const fetchService = async () => {
-  try {
-    const response = await fetch(`/api/GET/locations/locationsbyId?id=${serviceId}`)
-    if (!response.ok) {
-      throw new Error(`Error: ${response.status} - ${response.statusText}`)
+    // Validate coordinates - API expects at least 3 points
+    if (formData.coordinates.length < 3) {
+      toast.error("Please define a service area with at least 3 coordinate points")
+      return
     }
-    const data = await response.json()
-    const serviceData: ServiceLocation = data.data[0]
 
-    // ✅ FIXED: Transform coordinates from backend format to frontend format
-    // Backend sends objects with _latitude and _longitude
-    // Frontend needs [number, number][] format
-    const transformedCoordinates: [number, number][] =
-      serviceData.coordinates?.map((coord) => [coord._latitude, coord._longitude]) || []
+    if (!serviceId) {
+      toast.error("Service ID is missing")
+      return
+    }
 
-    setService(serviceData)
-    setFormData({
-      city: serviceData.city || "",
-      price: serviceData.price || 0,
-      isActive: serviceData.isActive ?? true,
-      countryISOCode: serviceData.countryISOCode || "",
-      commission: serviceData.commission || 0,
-      radius: serviceData.radius || 0,
-      coordinates: transformedCoordinates, // This is correct
-      bins: serviceData.bins || [],
-    })
-  } catch (error) {
-    console.error("Error fetching service:", error)
-    setError((error as Error).message)
-  } finally {
-    setLoading(false)
+    // ✅ FIXED: Send coordinates as [number, number][] format (what API expects)
+    // NOT as objects with _latitude and _longitude properties
+    const payload = {
+      city: formData.city,
+      price: formData.price,
+      isActive: formData.isActive,
+      countryISOCode: formData.countryISOCode,
+      commission: formData.commission,
+      radius: formData.radius,
+      coordinates: formData.coordinates, // Send as [number, number][] directly
+      bins: formData.bins,
+    }
+
+    try {
+      setSaving(true)
+      console.log("📤 Sending to:", `/api/PUT/serviceLocation?id=${serviceId}`)
+      console.log("📤 Payload:", JSON.stringify(payload, null, 2))
+
+      const response = await fetch(`/api/PUT/serviceLocation?id=${serviceId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+
+      console.log("📨 Response status:", response.status)
+      console.log("📨 Response ok:", response.ok)
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
+        console.error("❌ Error response:", errorData)
+        throw new Error(errorData.error || errorData.message || `Failed to update service location: ${response.status}`)
+      }
+
+      const result = await response.json()
+      console.log("✅ Update success:", result)
+      toast.success("Service location updated successfully")
+      router.push("/service-locations")
+    } catch (error) {
+      console.error("💥 Error updating service location:", error)
+      toast.error(`Failed to update service location: ${(error as Error).message}`)
+    } finally {
+      setSaving(false)
+    }
   }
-}
+
+  // Also need to fix the coordinate transformation when fetching data
+  const fetchService = async () => {
+    try {
+      const response = await fetch(`/api/GET/locations/locationsbyId?id=${serviceId}`)
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} - ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      const serviceData: ServiceLocation = data.data[0]
+
+      // ✅ FIXED: Transform coordinates from backend format to frontend format
+      // Backend sends objects with _latitude and _longitude
+      // Frontend needs [number, number][] format
+      const transformedCoordinates: [number, number][] =
+        serviceData.coordinates?.map((coord) => [coord._latitude, coord._longitude]) || []
+
+      setService(serviceData)
+      setFormData({
+        city: serviceData.city || "",
+        price: serviceData.price || 0,
+        isActive: serviceData.isActive ?? true,
+        countryISOCode: serviceData.countryISOCode || "",
+        commission: serviceData.commission || 0,
+        radius: serviceData.radius || 0,
+        coordinates: transformedCoordinates, // This is correct
+        bins: serviceData.bins || [],
+      })
+    } catch (error) {
+      console.error("Error fetching service:", error)
+      setError((error as Error).message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Handle input changes
   const handleInputChange = (field: string, value: string | number | boolean) => {
@@ -444,6 +438,7 @@ const fetchService = async () => {
             <p className="text-muted-foreground">Update details for {service.city}</p>
           </div>
         </div>
+
         <Card>
           <CardHeader>
             <CardTitle>Service Location Details</CardTitle>
@@ -532,10 +527,12 @@ const fetchService = async () => {
                         Service area defined with {formData.coordinates.length} points
                       </p>
                       <p className="text-sm text-gray-500">
-                        Coordinates: {formData.coordinates.slice(0, 2).map(coord => 
-                          `[${coord[0].toFixed(4)}, ${coord[1].toFixed(4)}]`
-                        ).join(', ')}
-                        {formData.coordinates.length > 2 && '...'}
+                        Coordinates:{" "}
+                        {formData.coordinates
+                          .slice(0, 2)
+                          .map((coord) => `[${coord[0].toFixed(4)}, ${coord[1].toFixed(4)}]`)
+                          .join(", ")}
+                        {formData.coordinates.length > 2 && "..."}
                       </p>
                     </div>
                   ) : (
@@ -578,7 +575,7 @@ const fetchService = async () => {
           </CardContent>
         </Card>
       </div>
-      
+
       <EditMapSheet
         isOpen={isMapSheetOpen}
         onOpenChange={setIsMapSheetOpen}
