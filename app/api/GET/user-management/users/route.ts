@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     return Response.json({ error: 'No token found' }, { status: 401 });
   }
   
-    const res = await fetch(`${process.env.URLB}/users/get?limit=500`, {
+    const res = await fetch(`${process.env.URLB}/users/get?limit=500&from=2024-01-01`, {
       cache: 'no-cache',  
       headers: {
             'Content-Type': 'application/json',
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     });
   
     const product = await res.json();
-  
+  console.log('users',product)
     return Response.json( product );
   }
   
