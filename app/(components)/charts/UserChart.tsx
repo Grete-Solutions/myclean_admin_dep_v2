@@ -38,6 +38,19 @@ interface MonthlyData {
   users: number;
 }
 
+// Define proper types for the tooltip
+interface TooltipPayload {
+  value: number;
+  name: string;
+  color: string;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayload[];
+  label?: string;
+}
+
 export default function UserChart() {
   const [userData, setUserData] = useState<MonthlyData[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -126,8 +139,8 @@ export default function UserChart() {
     setUserData(monthlyCounts);
   };
 
-  // Custom tooltip to show better formatting
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  // Custom tooltip with proper TypeScript types
+  const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-3 border border-gray-300 rounded shadow-lg">
