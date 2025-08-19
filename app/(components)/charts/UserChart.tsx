@@ -13,18 +13,24 @@ interface ApiResponse {
   data: User[];
 }
 
-// Define types for user data
+// Updated User interface to match actual API response
 interface User {
   id: string;
-  userType: number;
-  createdAt: {
+  email: string;
+  userType?: number;
+  createdAt?: {
     _seconds: number;
     _nanoseconds: number;
   };
-  lastname: string;
-  firstname: string;
-  status: string;
-  // Add other fields as needed
+  lastname?: string;
+  firstname?: string;
+  country?: string;
+  city?: string;
+  phone?: string;
+  isDelete?: boolean;
+  isDisable?: boolean;
+  isSuspend?: boolean;
+  // Removed status field as it's not in the API response
 }
 
 interface MonthlyData {
@@ -81,12 +87,15 @@ export default function UserChart() {
     
     // Count users by creation month
     users.forEach(user => {
-      if (user.createdAt && user.createdAt._seconds) {
+      // Only process users that have createdAt timestamp and are not deleted/disabled/suspended
+      if (user.createdAt && user.createdAt._seconds && 
+          !user.isDelete && !user.isDisable && !user.isSuspend) {
+        
         // Convert seconds to milliseconds for Date constructor
         const creationDate = new Date(user.createdAt._seconds * 1000);
         
-        // Only count approved users created in the current year
-        if (user.status === 'approved' && creationDate.getFullYear() === currentYear) {
+        // Count users created in the current year
+        if (creationDate.getFullYear() === currentYear) {
           const monthIndex = creationDate.getMonth();
           if (monthIndex <= currentMonth) {
             monthlyCounts[monthIndex].users += 1;
@@ -105,9 +114,28 @@ export default function UserChart() {
       const prevMonthUsers = monthlyCounts[currentMonth - 1].users;
       const growth = ((currentMonthUsers - prevMonthUsers) / prevMonthUsers) * 100;
       setGrowthRate(Number(growth.toFixed(1)));
+    } else if (currentMonth > 0) {
+      // If previous month had 0 users but current month has users, it's infinite growth
+      // Set to 100% for display purposes
+      const currentMonthUsers = monthlyCounts[currentMonth].users;
+      if (currentMonthUsers > 0) {
+        setGrowthRate(100);
+      }
     }
     
     setUserData(monthlyCounts);
+  };
+
+  // Custom tooltip to show better formatting
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 border border-gray-300 rounded shadow-lg">
+          <p className="font-medium">{`${label}: ${payload[0].value} users`}</p>
+        </div>
+      );
+    }
+    return null;
   };
 
   if (isLoading) {
@@ -117,7 +145,10 @@ export default function UserChart() {
           <CardTitle className="text-lg">User Growth Trend</CardTitle>
         </div>
         <CardContent className="flex items-center justify-center h-64">
-          <p>Loading user data...</p>
+          <div className="flex items-center space-x-2">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+            <p>Loading user data...</p>
+          </div>
         </CardContent>
       </Card>
     );
@@ -130,7 +161,15 @@ export default function UserChart() {
           <CardTitle className="text-lg">User Growth Trend</CardTitle>
         </div>
         <CardContent className="flex items-center justify-center h-64">
-          <p className="text-red-500">Error: {error}</p>
+          <div className="text-center">
+            <p className="text-red-500 mb-2">Error: {error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -139,32 +178,70 @@ export default function UserChart() {
   return (
     <Card className="overflow-hidden">
       <div className="flex justify-between items-center p-4">
-        <CardTitle className="text-lg">Approved Users Growth</CardTitle>
-        <button className="p-1">
+        <CardTitle className="text-lg">Active Users Growth</CardTitle>
+        <button className="p-1 hover:bg-gray-100 rounded">
           <span className="sr-only">More</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+            <circle cx="12" cy="12" r="1"></circle>
+            <circle cx="12" cy="5" r="1"></circle>
+            <circle cx="12" cy="19" r="1"></circle>
+          </svg>
         </button>
       </div>
       <CardContent>
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={userData} margin={{ top: 5, right: 5, bottom: 5, left: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} horizontal={true} />
-            <XAxis dataKey="month" />
-            <YAxis />
-            <Tooltip />
-            <Bar dataKey="users" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={16} />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} horizontal={true} stroke="#e0e4e7" />
+            <XAxis 
+              dataKey="month" 
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 12, fill: '#6b7280' }}
+            />
+            <YAxis 
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 12, fill: '#6b7280' }}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Bar 
+              dataKey="users" 
+              fill="#3b82f6" 
+              radius={[4, 4, 0, 0]} 
+              barSize={16}
+            />
           </BarChart>
         </ResponsiveContainer>
-        <div className="flex justify-around mt-4">
-          <div className="bg-black text-white px-2 py-1 rounded-full text-xs flex items-center">
-            <span>{yearToDate} users</span>
-            {growthRate > 0 && <span className="text-green-400 ml-1">+{growthRate}%</span>}
-            {growthRate < 0 && <span className="text-red-400 ml-1">{growthRate}%</span>}
-            {growthRate === 0 && <span className="text-gray-400 ml-1">0%</span>}
+        
+        {/* Stats section */}
+        <div className="flex justify-center mt-4">
+          <div className="bg-gray-900 text-white px-4 py-2 rounded-full text-sm flex items-center space-x-2">
+            <span className="font-medium">{yearToDate} users YTD</span>
+            {growthRate > 0 && (
+              <span className="text-green-400 flex items-center">
+                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                </svg>
+                +{growthRate}%
+              </span>
+            )}
+            {growthRate < 0 && (
+              <span className="text-red-400 flex items-center">
+                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+                {growthRate}%
+              </span>
+            )}
+            {growthRate === 0 && <span className="text-gray-400">0%</span>}
           </div>
         </div>
-        <div className="flex justify-around mt-4">
-          <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs">Approved Users</div>
+        
+        {/* Legend */}
+        <div className="flex justify-center mt-3">
+          <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs">
+            Active Users (Non-deleted/disabled/suspended)
+          </div>
         </div>
       </CardContent>
     </Card>

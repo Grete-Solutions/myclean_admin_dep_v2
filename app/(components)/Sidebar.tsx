@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Home, BarChart2, Settings, GitBranch, MapPin, User, Users, MessageSquare, Bell, HelpCircle, FileText, DollarSign, ChevronLeft, Shield, Sliders, Car, Globe, FileCheck, FileClock, FileX, Clock, FileTerminal, CheckCircle, Clock3, Star, Wallet2, UserCheck, UserX, UserMinus, UserX2, Send, Mail, AlertCircle, BarChart, PieChart, Menu } from 'lucide-react';
+import { ChevronDown, ChevronRight, Home, BarChart2, Settings, GitBranch, MapPin, User, Users, MessageSquare, Bell, HelpCircle, FileText, DollarSign, ChevronLeft, Shield, Sliders, Car, Globe, FileCheck, FileClock, FileX, Clock, FileTerminal, CheckCircle, Clock3, Star, Wallet2, UserCheck, UserX, UserMinus, UserX2,  AlertCircle, BarChart, PieChart, Menu } from 'lucide-react';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
@@ -117,14 +117,10 @@ const SIDENAV_ITEMS: NavGroup[] = [
         path: '/chat',
         icon: <MessageSquare size={18} />,
       },
-      {
+       {
         title: 'Notification',
+        path: '/push-notifications',
         icon: <Bell size={18} />,
-        submenu: true,
-        subMenuItems: [
-          { title: 'Push Notifications', path: '/notification/push-notifications', icon: <Send size={16} /> },
-          { title: 'Email Notifications', path: '/notification/email-notifications', icon: <Mail size={16} /> },
-        ],
       },
       {
         title: 'Promo Code',

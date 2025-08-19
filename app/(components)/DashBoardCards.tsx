@@ -1,13 +1,13 @@
 'use client'
 import React from 'react';
 import { AnalyticsOverview } from './charts/AnalyticsOverview';
-import { MapPreviewCard } from './charts/MapPreview';
 import { PickupChart } from './charts/PickUpChart';
 import { PickupDetails } from './charts/PickUpDetails';
 import { PickupsByRegion } from './charts/PickupByRegion';
 import WasteManagementDashboard from './charts/Metrics';
 import { useSession } from 'next-auth/react';
 import UserChart from './charts/UserChart';
+import { MapPreviewCard } from './charts/MapPreview';
 
 // Function to determine morning or afternoon
 const getGreeting = () => {

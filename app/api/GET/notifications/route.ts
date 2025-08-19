@@ -5,6 +5,7 @@ export async function GET(request: NextRequest) {
   // Get token using the standard request
   const tokeninfo = await getToken({ req: request });
   const token = tokeninfo?.idToken;
+
   
   console.log('Token:', token);
   
@@ -12,15 +13,18 @@ export async function GET(request: NextRequest) {
     return Response.json({ error: 'No token found' }, { status: 401 });
   }
   
-  const res = await fetch(`${process.env.URLB}/users/get?limit=500&from=2024-01-01`, {
+  const res = await fetch(`${process.env.URLB}/notification`, {
     cache: 'no-cache',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${token}`, 
     },
   });
-  
-  const data = await res.json();
-  console.log('Approved users',data)
-  return Response.json(data);
-}
+
+  const product = await res.json();
+return new Response(JSON.stringify(product), {
+  headers: {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+  },
+});}
