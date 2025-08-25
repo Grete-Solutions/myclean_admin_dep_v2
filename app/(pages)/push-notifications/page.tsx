@@ -304,14 +304,14 @@ export default function NotificationsDataTable() {
       {error && (
         <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
           <p className="text-sm text-destructive">Error: {error}</p>
-          <Button 
+          {/* <Button 
             variant="outline" 
             size="sm" 
             className="mt-2"
             onClick={() => window.location.reload()}
           >
             Retry
-          </Button>
+          </Button> */}
         </div>
       )}
       

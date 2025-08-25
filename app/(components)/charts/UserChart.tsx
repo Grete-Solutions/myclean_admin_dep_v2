@@ -173,7 +173,7 @@ export default function UserChart() {
         <div className="flex justify-between items-center p-4">
           <CardTitle className="text-lg">User Growth Trend</CardTitle>
         </div>
-        <CardContent className="flex items-center justify-center h-64">
+        {/* <CardContent className="flex items-center justify-center h-64">
           <div className="text-center">
             <p className="text-red-500 mb-2">Error: {error}</p>
             <button 
@@ -183,7 +183,7 @@ export default function UserChart() {
               Retry
             </button>
           </div>
-        </CardContent>
+        </CardContent> */}
       </Card>
     );
   }

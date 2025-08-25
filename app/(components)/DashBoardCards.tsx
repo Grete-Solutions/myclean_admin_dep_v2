@@ -1,13 +1,39 @@
 'use client'
 import React from 'react';
+import dynamic from 'next/dynamic';
+import { useSession } from 'next-auth/react';
+
+// Static imports for components that don't use browser-only APIs
 import { AnalyticsOverview } from './charts/AnalyticsOverview';
 import { PickupChart } from './charts/PickUpChart';
 import { PickupDetails } from './charts/PickUpDetails';
-import { PickupsByRegion } from './charts/PickupByRegion';
 import WasteManagementDashboard from './charts/Metrics';
-import { useSession } from 'next-auth/react';
 import UserChart from './charts/UserChart';
-import { MapPreviewCard } from './charts/MapPreview';
+
+// Dynamic imports for browser-dependent components
+const PickupsByRegion = dynamic(
+  () => import('./charts/PickupByRegion').then(mod => ({ default: mod.PickupsByRegion })),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="h-64 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+        <div className="text-gray-500">Loading regions chart...</div>
+      </div>
+    )
+  }
+);
+
+const MapPreviewCard = dynamic(
+  () => import('./charts/MapPreview').then(mod => ({ default: mod.MapPreviewCard })),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="h-64 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+        <div className="text-gray-500">Loading map...</div>
+      </div>
+    )
+  }
+);
 
 // Function to determine morning or afternoon
 const getGreeting = () => {
@@ -36,10 +62,6 @@ const Header: React.FC = () => {
     </div>
   );
 };
-
-
-
-
 
 // Main Dashboard Component
 const DashboardCard: React.FC = () => {
