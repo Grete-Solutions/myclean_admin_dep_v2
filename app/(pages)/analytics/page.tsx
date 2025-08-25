@@ -1,16 +1,86 @@
 'use client'
 
 import React from "react";
+import dynamic from 'next/dynamic';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Activity, Users, MapPin, Package, CreditCard, BarChart2 } from "lucide-react";
 import { useSession } from 'next-auth/react';
-import { AnalyticsOverview } from '@/app/(components)/charts/AnalyticsOverview';
-import { MapPreviewCard } from '@/app/(components)/charts/MapPreview';
-import { PickupChart } from '@/app/(components)/charts/PickUpChart';
-import { PickupDetails } from '@/app/(components)/charts/PickUpDetails';
-import { PickupsByRegion } from '@/app/(components)/charts/PickupByRegion';
+
+// Static imports for components that don't use browser-only APIs
 import WasteManagementDashboard from "@/app/(components)/charts/Metrics";
-import UserChart from "@/app/(components)/charts/UserChart";
+
+// Dynamic imports for potentially browser-dependent components
+const AnalyticsOverview = dynamic(
+  () => import('@/app/(components)/charts/AnalyticsOverview').then(mod => ({ default: mod.AnalyticsOverview })),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="h-48 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+        <div className="text-gray-500">Loading analytics overview...</div>
+      </div>
+    )
+  }
+);
+
+const MapPreviewCard = dynamic(
+  () => import('@/app/(components)/charts/MapPreview').then(mod => ({ default: mod.MapPreviewCard })),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="h-64 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+        <div className="text-gray-500">Loading map...</div>
+      </div>
+    )
+  }
+);
+
+const PickupChart = dynamic(
+  () => import('@/app/(components)/charts/PickUpChart').then(mod => ({ default: mod.PickupChart })),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="h-64 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+        <div className="text-gray-500">Loading pickup chart...</div>
+      </div>
+    )
+  }
+);
+
+const PickupDetails = dynamic(
+  () => import('@/app/(components)/charts/PickUpDetails').then(mod => ({ default: mod.PickupDetails })),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="h-64 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+        <div className="text-gray-500">Loading pickup details...</div>
+      </div>
+    )
+  }
+);
+
+const PickupsByRegion = dynamic(
+  () => import('@/app/(components)/charts/PickupByRegion').then(mod => ({ default: mod.PickupsByRegion })),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="h-64 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+        <div className="text-gray-500">Loading regions chart...</div>
+      </div>
+    )
+  }
+);
+
+const UserChart = dynamic(
+  () => import('@/app/(components)/charts/UserChart'),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="h-64 bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+        <div className="text-gray-500">Loading user chart...</div>
+      </div>
+    )
+  }
+);
 
 // Function to determine greeting based on time of day
 const getGreeting = () => {
@@ -101,7 +171,9 @@ function Analytics() {
               <div className="bg-white p-6 rounded-lg shadow">
                 {/* Space for additional user metrics */}
                 <h3 className="text-lg font-medium mb-4">User Demographics</h3>
-                {/* Your user demographics component would go here */}
+                <div className="h-32 bg-gray-50 rounded flex items-center justify-center">
+                  <p className="text-gray-500 text-sm">User demographics component will be added here</p>
+                </div>
               </div>
             </div>
           </div>
@@ -131,7 +203,9 @@ function Analytics() {
               <div className="bg-white p-6 rounded-lg shadow">
                 {/* Space for additional location metrics */}
                 <h3 className="text-lg font-medium mb-4">Service Coverage</h3>
-                {/* Your service coverage component would go here */}
+                <div className="h-32 bg-gray-50 rounded flex items-center justify-center">
+                  <p className="text-gray-500 text-sm">Service coverage component will be added here</p>
+                </div>
               </div>
             </div>
           </div>
@@ -146,12 +220,16 @@ function Analytics() {
               <div className="bg-white p-6 rounded-lg shadow">
                 {/* Space for financial metrics */}
                 <h3 className="text-lg font-medium mb-4">Revenue Breakdown</h3>
-                {/* Your revenue component would go here */}
+                <div className="h-32 bg-gray-50 rounded flex items-center justify-center">
+                  <p className="text-gray-500 text-sm">Revenue component will be added here</p>
+                </div>
               </div>
               <div className="bg-white p-6 rounded-lg shadow">
                 {/* Space for expense metrics */}
                 <h3 className="text-lg font-medium mb-4">Expense Analysis</h3>
-                {/* Your expense component would go here */}
+                <div className="h-32 bg-gray-50 rounded flex items-center justify-center">
+                  <p className="text-gray-500 text-sm">Expense component will be added here</p>
+                </div>
               </div>
             </div>
           </div>
