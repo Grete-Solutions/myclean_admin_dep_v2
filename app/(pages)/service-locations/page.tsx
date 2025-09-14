@@ -222,13 +222,41 @@ function ServiceDataTable({
       header: "Coordinates",
       cell: ({ row }) => {
         const coordinates = row.original.coordinates
+        if (!coordinates || coordinates.length === 0) {
+          return <div>No coordinates</div>
+        }
+
+        const coordinateStrings = coordinates.map((coord) =>
+          `[${coord._latitude.toFixed(4)}, ${coord._longitude.toFixed(4)}]`
+        )
+
+        // Join all coordinates
+        const fullText = coordinateStrings.join(", ")
+
+        // Truncate if too long (show first 2 coordinates + "...")
+        const maxLength = 60 // Adjust this value as needed
+        let displayText = fullText
+
+        if (fullText.length > maxLength) {
+          if (coordinates.length > 2) {
+            // Show first 2 coordinates + count of remaining
+            displayText = coordinateStrings.slice(0, 2).join(", ") +
+                         ` ... (+${coordinates.length - 2} more)`
+          } else if (coordinates.length === 2) {
+            // Show first coordinate + "..."
+            displayText = coordinateStrings[0] + " ..."
+          } else {
+            // Single coordinate, truncate the text
+            displayText = fullText.substring(0, maxLength - 3) + "..."
+          }
+        }
+
         return (
-          <div>
-            {coordinates && coordinates.length > 0
-              ? coordinates
-                  .map((coord) => `[${coord._latitude.toFixed(4)}, ${coord._longitude.toFixed(4)}]`)
-                  .join(", ")
-              : "No coordinates"}
+          <div
+            className="max-w-[200px] truncate"
+            title={fullText} // Show full text on hover
+          >
+            {displayText}
           </div>
         );
       },

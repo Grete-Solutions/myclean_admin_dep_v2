@@ -303,19 +303,52 @@ export default function EditServiceLocationContent() {
   // Also need to fix the coordinate transformation when fetching data
   const fetchService = async () => {
     try {
+      console.log('🔍 Fetching service location with ID:', serviceId)
       const response = await fetch(`/api/GET/locations/locationsbyId?id=${serviceId}`)
+      console.log('📡 API Response status:', response.status)
+
       if (!response.ok) {
+        const errorText = await response.text()
+        console.error('❌ API Error response:', errorText)
         throw new Error(`Error: ${response.status} - ${response.statusText}`)
       }
 
       const data = await response.json()
-      const serviceData: ServiceLocation = data.data[0]
+      console.log('📦 Raw API response:', data)
+
+      // Handle both array and single object responses
+      const serviceData: ServiceLocation = Array.isArray(data.data) ? data.data[0] : data.data
+      console.log('🏗️ Processed service data:', serviceData)
+
+      // Validate that we have service data
+      if (!serviceData) {
+        throw new Error('No service location data found')
+      }
 
       // ✅ FIXED: Transform coordinates from backend format to frontend format
       // Backend sends objects with _latitude and _longitude
       // Frontend needs [number, number][] format
-      const transformedCoordinates: [number, number][] =
-        serviceData.coordinates?.map((coord) => [coord._latitude, coord._longitude]) || []
+      let transformedCoordinates: [number, number][] = []
+
+      if (serviceData.coordinates && Array.isArray(serviceData.coordinates)) {
+        try {
+          transformedCoordinates = serviceData.coordinates.map((coord: any) => {
+            // Handle different coordinate formats
+            if (coord._latitude !== undefined && coord._longitude !== undefined) {
+              return [coord._latitude, coord._longitude]
+            } else if (Array.isArray(coord) && coord.length === 2) {
+              return coord as [number, number]
+            } else {
+              console.warn('Unexpected coordinate format:', coord)
+              return [0, 0] // fallback
+            }
+          })
+          console.log('🔄 Transformed coordinates:', transformedCoordinates)
+        } catch (error) {
+          console.error('❌ Error transforming coordinates:', error)
+          transformedCoordinates = []
+        }
+      }
 
       setService(serviceData)
       setFormData({
@@ -577,6 +610,7 @@ export default function EditServiceLocationContent() {
       </div>
 
       <EditMapSheet
+        key={formData.coordinates.length} // Force re-render when coordinates change
         isOpen={isMapSheetOpen}
         onOpenChange={setIsMapSheetOpen}
         initialCoordinates={formData.coordinates}

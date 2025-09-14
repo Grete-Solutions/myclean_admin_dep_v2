@@ -27,7 +27,8 @@ interface EditMapSheetProps {
 const CoordinateDisplay: React.FC<{
   coordinates: [number, number][]
   activePolygons: [number, number][][]
-}> = ({ coordinates, activePolygons }) => {
+  initialCoordinates: [number, number][]
+}> = ({ coordinates, activePolygons, initialCoordinates }) => {
   return (
     <div className="mt-4 p-4 border rounded-lg bg-gray-50">
       <h3 className="font-medium mb-2">Coordinate Points</h3>
@@ -49,12 +50,23 @@ const CoordinateDisplay: React.FC<{
           <div className="mt-1">
             {activePolygons.map((polygon, polyIdx) => (
               <div key={polyIdx} className="mb-2">
-                <p className="text-sm text-gray-600">
-                  Polygon {polyIdx + 1} ({polygon.length} points):
+                <p className="text-sm text-gray-600 flex items-center gap-2">
+                  <span className={`inline-block w-2 h-2 rounded-full ${
+                    polyIdx === 0 && initialCoordinates.length > 0 ? 'bg-blue-500' : 'bg-green-500'
+                  }`}></span>
+                  Polygon {polyIdx + 1} ({polygon.length} points)
+                  {polyIdx === 0 && initialCoordinates.length > 0 && (
+                    <span className="text-xs text-blue-600 font-medium">(Existing)</span>
+                  )}
+                  {polyIdx > 0 && (
+                    <span className="text-xs text-green-600 font-medium">(New)</span>
+                  )}
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-2 mt-1">
                   {polygon.map((coord, idx) => (
-                    <div key={idx} className="text-sm p-1 bg-green-100 rounded">
+                    <div key={idx} className={`text-sm p-1 rounded ${
+                      polyIdx === 0 && initialCoordinates.length > 0 ? 'bg-blue-100' : 'bg-green-100'
+                    }`}>
                       Point {idx + 1}: [{coord[0].toFixed(6)}, {coord[1].toFixed(6)}]
                     </div>
                   ))}
@@ -74,46 +86,131 @@ const CoordinateDisplay: React.FC<{
 const EditMapSheet: React.FC<EditMapSheetProps> = ({ isOpen, onOpenChange, initialCoordinates, onSave }) => {
   const [coordinates, setCoordinates] = React.useState<[number, number][]>([])
   const [activePolygons, setActivePolygons] = React.useState<[number, number][][]>([])
-  const [hasInitialized, setHasInitialized] = React.useState(false)
+  const [mapCenter, setMapCenter] = React.useState<[number, number]>([7.9465, -1.0232]) // Default Ghana center
+  const [mapZoom, setMapZoom] = React.useState<number>(7) // Default zoom
 
-  // Ghana's center coordinates
+  // Ghana's center coordinates (fallback)
   const ghanaCenterLat = 7.9465
   const ghanaCenterLng = -1.0232
 
-  // Initialize the map state when sheet opens
+  // Function to calculate bounds of all polygons
+  const calculateBounds = (polygons: [number, number][][]): [[number, number], [number, number]] | null => {
+    if (polygons.length === 0) return null
+
+    let minLat = Infinity
+    let maxLat = -Infinity
+    let minLng = Infinity
+    let maxLng = -Infinity
+
+    polygons.forEach(polygon => {
+      polygon.forEach(([lat, lng]) => {
+        minLat = Math.min(minLat, lat)
+        maxLat = Math.max(maxLat, lat)
+        minLng = Math.min(minLng, lng)
+        maxLng = Math.max(maxLng, lng)
+      })
+    })
+
+    // Add some padding to the bounds
+    const latPadding = (maxLat - minLat) * 0.1
+    const lngPadding = (maxLng - minLng) * 0.1
+
+    return [
+      [minLat - latPadding, minLng - lngPadding],
+      [maxLat + latPadding, maxLng + lngPadding]
+    ]
+  }
+
+  // Function to calculate center and zoom from bounds
+  const calculateCenterAndZoom = (bounds: [[number, number], [number, number]]): { center: [number, number], zoom: number } => {
+    const [[minLat, minLng], [maxLat, maxLng]] = bounds
+
+    // Calculate center
+    const centerLat = (minLat + maxLat) / 2
+    const centerLng = (minLng + maxLng) / 2
+
+    // Calculate zoom level based on bounds
+    const latDiff = maxLat - minLat
+    const lngDiff = maxLng - minLng
+    const maxDiff = Math.max(latDiff, lngDiff)
+
+    // Rough zoom calculation (higher zoom = more zoomed in)
+    let zoom = 10
+    if (maxDiff > 10) zoom = 5
+    else if (maxDiff > 5) zoom = 6
+    else if (maxDiff > 2) zoom = 7
+    else if (maxDiff > 1) zoom = 8
+    else if (maxDiff > 0.5) zoom = 9
+    else if (maxDiff > 0.2) zoom = 10
+    else zoom = 12
+
+    return { center: [centerLat, centerLng], zoom }
+  }
+
+  // Initialize the map state when sheet opens or coordinates change
   React.useEffect(() => {
-    if (isOpen && !hasInitialized) {
-      console.log("Initializing map with coordinates:", initialCoordinates)
+    if (isOpen) {
+      console.log("Initializing/updating map with coordinates:", initialCoordinates)
       setCoordinates([]) // Clear any current drawing
-      setActivePolygons(initialCoordinates.length > 0 ? [initialCoordinates] : [])
-      setHasInitialized(true)
-    } else if (!isOpen) {
-      setHasInitialized(false)
+      // Preserve existing coordinates as active polygons
+      const polygons = initialCoordinates.length > 0 ? [initialCoordinates] : []
+
+      // Auto-zoom to polygons if they exist
+      if (polygons.length > 0) {
+        const bounds = calculateBounds(polygons)
+        if (bounds) {
+          const { center, zoom } = calculateCenterAndZoom(bounds)
+          setMapCenter(center)
+          setMapZoom(zoom)
+          console.log("Auto-zooming to polygons:", { center, zoom, bounds })
+        }
+      } else {
+        // Reset to default Ghana center if no polygons
+        setMapCenter([ghanaCenterLat, ghanaCenterLng])
+        setMapZoom(7)
+      }
+
+      setActivePolygons(polygons)
     }
-  }, [isOpen, initialCoordinates, hasInitialized])
+  }, [isOpen, initialCoordinates])
 
   const handleSave = () => {
     // If there are active drawing points, complete them into a polygon
     let finalPolygons = [...activePolygons]
-    
+
     if (coordinates.length > 0) {
       if (coordinates.length >= 3) {
         finalPolygons = [...activePolygons, coordinates]
       } else {
         alert("Current drawing has less than 3 points and will not be saved as a polygon.")
+        return
       }
     }
 
     console.log("Saving polygons:", finalPolygons)
-    
-    // Pass back the first (or only) polygon, or empty array if none
-    const polygonToSave = finalPolygons.length > 0 ? finalPolygons[0] : []
+
+    // Handle multiple polygons - if we have both existing and new, use the newest one
+    let polygonToSave: [number, number][] = []
+
+    if (finalPolygons.length === 0) {
+      // No polygons at all
+      polygonToSave = []
+    } else if (finalPolygons.length === 1) {
+      // Only one polygon (either existing or new)
+      polygonToSave = finalPolygons[0]
+      console.log("Saving single polygon:", polygonToSave.length, "points")
+    } else {
+      // Multiple polygons - use the last one (newest drawing)
+      // This preserves existing coordinates while allowing new drawings
+      polygonToSave = finalPolygons[finalPolygons.length - 1]
+      console.log("Multiple polygons found, saving the newest one:", polygonToSave.length, "points")
+    }
+
     onSave(polygonToSave)
-    
+
     // Reset state
     setCoordinates([])
     setActivePolygons([])
-    setHasInitialized(false)
   }
 
   const handleClearOrRemove = () => {
@@ -139,7 +236,6 @@ const EditMapSheet: React.FC<EditMapSheetProps> = ({ isOpen, onOpenChange, initi
     // Reset to initial state
     setCoordinates([])
     setActivePolygons(initialCoordinates.length > 0 ? [initialCoordinates] : [])
-    setHasInitialized(false)
     onOpenChange(false)
   }
 
@@ -166,8 +262,8 @@ const EditMapSheet: React.FC<EditMapSheetProps> = ({ isOpen, onOpenChange, initi
         <div className="grid gap-4 py-4">
           <div className="h-64 md:h-80 w-full border rounded-lg overflow-hidden">
             <MapWithNoSSR
-              center={[ghanaCenterLat, ghanaCenterLng]}
-              zoom={7}
+              center={mapCenter}
+              zoom={mapZoom}
               coordinates={coordinates}
               setCoordinates={setCoordinates}
               activePolygons={activePolygons}
@@ -175,7 +271,7 @@ const EditMapSheet: React.FC<EditMapSheetProps> = ({ isOpen, onOpenChange, initi
             />
           </div>
           
-          <CoordinateDisplay coordinates={coordinates} activePolygons={activePolygons} />
+          <CoordinateDisplay coordinates={coordinates} activePolygons={activePolygons} initialCoordinates={initialCoordinates} />
           
           <div className="flex justify-between gap-2">
             <div className="flex gap-2">

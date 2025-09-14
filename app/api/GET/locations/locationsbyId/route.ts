@@ -31,6 +31,12 @@ export async function GET(request: NextRequest) {
   
     const data = await res.json();
     console.log('Fetched Data:', data);
+    console.log('Data structure:', {
+      hasData: !!data.data,
+      dataType: typeof data.data,
+      isArray: Array.isArray(data.data),
+      dataLength: Array.isArray(data.data) ? data.data.length : 'N/A'
+    });
     return Response.json(data);
   } catch (error) {
     console.error('Error fetching admin data:', error);
