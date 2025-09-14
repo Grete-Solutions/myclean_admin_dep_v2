@@ -1,13 +1,11 @@
 import * as React from "react";
 import Select, { StylesConfig, MultiValue, SingleValue, CSSObjectWithLabel, ControlProps, OptionProps } from "react-select";
-import { Plus, Send, Loader2 } from "lucide-react";
+import { Plus, Send, Loader2, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
-  SheetFooter,
-  SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
@@ -482,17 +480,6 @@ export default function AddNotificationSheet({
     );
   };
 
-  // Determine notification type text for preview
-  const getNotificationTypeText = () => {
-    if (formData.sendPush && formData.sendEmail) {
-      return "via push and email";
-    } else if (formData.sendPush) {
-      return "via push";
-    } else if (formData.sendEmail) {
-      return "via email";
-    }
-    return "";
-  };
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
@@ -506,225 +493,375 @@ export default function AddNotificationSheet({
         </Button>
       </SheetTrigger>
       <SheetContent
-        className="w-[45vw] max-w-[600px] min-w-[400px] bg-background rounded-l-xl shadow-2xl p-6"
+        className="w-[65vw] max-w-[900px] min-w-[500px] bg-background rounded-l-xl shadow-2xl p-0"
         side="right"
       >
         <div className="h-full flex flex-col">
-          <SheetHeader className="border-b pb-4 mb-6">
-            <SheetTitle className="text-2xl font-semibold text-foreground">
-              Send Notification
-            </SheetTitle>
-            <SheetDescription className="text-muted-foreground text-sm">
-              Create and send notifications to selected users via push, email, or both
-            </SheetDescription>
-          </SheetHeader>
+          {/* Enhanced Header */}
+          <div className="bg-gradient-to-r from-primary/5 to-primary/10 border-b px-8 py-6">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <Bell className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <SheetTitle className="text-3xl font-bold text-foreground">
+                  Send Notification
+                </SheetTitle>
+                <SheetDescription className="text-muted-foreground text-base mt-1">
+                  Create and send notifications to selected users via push, email, or both channels
+                </SheetDescription>
+              </div>
+            </div>
+          </div>
 
-          <div className="flex-1 overflow-y-auto py-4 px-1 custom-scrollbar">
-            <div className="grid gap-6">
+          <div className="flex-1 overflow-y-auto px-8 py-6 custom-scrollbar">
+            <div className="space-y-8">
               {/* Notification Type Selection */}
-              <div className="grid gap-2">
-                <Label className="text-sm font-medium text-foreground">
-                  Notification Type <span className="text-destructive">*</span>
-                </Label>
-                <div className="flex gap-4">
-                  <div className="flex items-center space-x-2">
+              <div className="bg-card border rounded-xl p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-1.5 bg-primary/10 rounded-md">
+                    <Send className="h-4 w-4 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground">Notification Channels</h3>
+                  <span className="text-destructive">*</span>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                     <Checkbox
                       id="sendPush"
                       checked={formData.sendPush}
                       onCheckedChange={(checked) => handleInputChange("sendPush", checked)}
                       disabled={isSubmitting}
+                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                     />
-                    <Label htmlFor="sendPush" className="text-sm text-foreground">
-                      Send Push Notification
-                    </Label>
+                    <div className="flex items-center gap-2">
+                      <div className="p-1 bg-blue-100 rounded">
+                        <Bell className="h-3 w-3 text-blue-600" />
+                      </div>
+                      <Label htmlFor="sendPush" className="text-sm font-medium text-foreground cursor-pointer">
+                        Push Notification
+                      </Label>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                     <Checkbox
                       id="sendEmail"
                       checked={formData.sendEmail}
                       onCheckedChange={(checked) => handleInputChange("sendEmail", checked)}
                       disabled={isSubmitting}
+                      className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                     />
-                    <Label htmlFor="sendEmail" className="text-sm text-foreground">
-                      Send Email Notification
-                    </Label>
+                    <div className="flex items-center gap-2">
+                      <div className="p-1 bg-green-100 rounded">
+                        <Send className="h-3 w-3 text-green-600" />
+                      </div>
+                      <Label htmlFor="sendEmail" className="text-sm font-medium text-foreground cursor-pointer">
+                        Email Notification
+                      </Label>
+                    </div>
                   </div>
                 </div>
                 {errors.notificationType && (
-                  <p className="text-sm text-destructive">{errors.notificationType}</p>
+                  <p className="text-sm text-destructive mt-3 flex items-center gap-1">
+                    <span className="text-xs">⚠️</span> {errors.notificationType}
+                  </p>
                 )}
               </div>
 
-              {/* Title Field */}
-              <div className="grid gap-2">
-                <Label
-                  htmlFor="title"
-                  className="text-sm font-medium text-foreground"
-                >
-                  Title <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="title"
-                  placeholder="Enter notification title"
-                  value={formData.title}
-                  onChange={(e) => handleInputChange("title", e.target.value)}
-                  className={`transition-all duration-300 rounded-lg border-2 ${
-                    errors.title ? "border-destructive" : "border-border"
-                  } focus:ring-2 focus:ring-primary/50 bg-background hover:bg-muted/20`}
-                  maxLength={100}
-                  disabled={isSubmitting}
-                />
-                {errors.title && (
-                  <p className="text-sm text-destructive">{errors.title}</p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  {formData.title.length}/100 characters
-                </p>
-              </div>
-
-              {/* Body Field */}
-              <div className="grid gap-2">
-                <Label
-                  htmlFor="body"
-                  className="text-sm font-medium text-foreground"
-                >
-                  Message <span className="text-destructive">*</span>
-                </Label>
-                <Textarea
-                  id="body"
-                  placeholder="Enter notification message"
-                  value={formData.body}
-                  onChange={(e) => handleInputChange("body", e.target.value)}
-                  className={`transition-all duration-300 rounded-lg border-2 ${
-                    errors.body ? "border-destructive" : "border-border"
-                  } focus:ring-2 focus:ring-primary/50 bg-background hover:bg-muted/20 resize-none`}
-                  rows={5}
-                  maxLength={500}
-                  disabled={isSubmitting}
-                />
-                {errors.body && (
-                  <p className="text-sm text-destructive">{errors.body}</p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  {formData.body.length}/500 characters
-                </p>
-              </div>
-
-              {/* Priority Field */}
-              <div className="grid gap-2">
-                <Label
-                  htmlFor="priority"
-                  className="text-sm font-medium text-foreground"
-                >
-                  Priority <span className="text-destructive">*</span>
-                </Label>
-                <Select<PriorityOption, false>
-                  name="priority"
-                  options={priorityOptions}
-                  value={priorityOptions.find(
-                    (option) => option.value === formData.priority
-                  )}
-                  onChange={handlePriorityChange}
-                  placeholder="Select priority"
-                  isDisabled={isSubmitting}
-                  styles={prioritySelectStyles}
-                  formatOptionLabel={(option) => (
-                    <div className="flex items-center gap-2">
-                      <Badge variant={option.badge}>{option.label}</Badge>
-                    </div>
-                  )}
-                />
-                {errors.priority && (
-                  <p className="text-sm text-destructive">{errors.priority}</p>
-                )}
-              </div>
-
-              {/* User Selection */}
-              <div className="grid gap-2">
-                <Label className="text-sm font-medium text-foreground">
-                  Recipients <span className="text-destructive">*</span>
-                  <span className="text-muted-foreground font-normal"> (Select users or all)</span>
-                </Label>
-                <Select<UserOption, true>
-                  name="tokens"
-                  isMulti
-                  options={userOptions}
-                  value={getSelectedUserOptions()}
-                  onChange={handleUserSelection}
-                  placeholder={
-                    isLoadingUsers ? "Loading users..." : "Search and select users..."
-                  }
-                  isDisabled={isSubmitting || isLoadingUsers}
-                  styles={userSelectStyles}
-                  isLoading={isLoadingUsers}
-                  closeMenuOnSelect={false}
-                  hideSelectedOptions={false}
-                />
-                {errors.tokens && (
-                  <p className="text-sm text-destructive">{errors.tokens}</p>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Selected {formData.tokens.length} of {validUsers.length} user(s) with valid tokens
-                </p>
-              </div>
-
-              {/* Preview */}
-              <div className="grid gap-2">
-                <Label className="text-sm font-medium text-foreground">
-                  Preview
-                </Label>
-                <div className="border rounded-lg p-4 bg-background shadow-md hover:shadow-lg transition-all duration-300">
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-semibold text-base text-foreground">
-                      {formData.title || "Notification Title"}
-                    </h4>
-                    <Badge
-                      variant={getPriorityColor(formData.priority)}
-                      className="ml-2 capitalize text-xs font-medium"
-                    >
-                      {formData.priority}
-                    </Badge>
+              {/* Content Section */}
+              <div className="bg-card border rounded-xl p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-1.5 bg-orange-100 rounded-md">
+                    <span className="text-orange-600 text-sm font-bold">✏️</span>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {formData.body || "Notification message will appear here..."}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Just now • To {formData.tokens.length || "0"} user(s) {getNotificationTypeText()}
-                  </p>
+                  <h3 className="text-lg font-semibold text-foreground">Notification Content</h3>
                 </div>
+                <div className="space-y-4">
+                  {/* Title Field */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="title" className="text-sm font-medium text-foreground flex items-center gap-1">
+                      Title <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="title"
+                      placeholder="Enter an engaging notification title..."
+                      value={formData.title}
+                      onChange={(e) => handleInputChange("title", e.target.value)}
+                      className={`transition-all duration-300 rounded-lg border-2 h-11 ${
+                        errors.title ? "border-destructive" : "border-border hover:border-primary/50"
+                      } focus:ring-2 focus:ring-primary/50 bg-background`}
+                      maxLength={100}
+                      disabled={isSubmitting}
+                    />
+                    {errors.title && (
+                      <p className="text-sm text-destructive flex items-center gap-1">
+                        <span className="text-xs">⚠️</span> {errors.title}
+                      </p>
+                    )}
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-muted-foreground">
+                        {formData.title.length}/100 characters
+                      </p>
+                      {formData.title.length > 80 && (
+                        <p className="text-xs text-amber-600">Approaching limit</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Body Field */}
+                  <div className="grid gap-2">
+                    <Label htmlFor="body" className="text-sm font-medium text-foreground flex items-center gap-1">
+                      Message <span className="text-destructive">*</span>
+                    </Label>
+                    <Textarea
+                      id="body"
+                      placeholder="Write your notification message here..."
+                      value={formData.body}
+                      onChange={(e) => handleInputChange("body", e.target.value)}
+                      className={`transition-all duration-300 rounded-lg border-2 ${
+                        errors.body ? "border-destructive" : "border-border hover:border-primary/50"
+                      } focus:ring-2 focus:ring-primary/50 bg-background resize-none`}
+                      rows={4}
+                      maxLength={500}
+                      disabled={isSubmitting}
+                    />
+                    {errors.body && (
+                      <p className="text-sm text-destructive flex items-center gap-1">
+                        <span className="text-xs">⚠️</span> {errors.body}
+                      </p>
+                    )}
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-muted-foreground">
+                        {formData.body.length}/500 characters
+                      </p>
+                      {formData.body.length > 400 && (
+                        <p className="text-xs text-amber-600">Approaching limit</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Settings Section */}
+              <div className="bg-card border rounded-xl p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-1.5 bg-purple-100 rounded-md">
+                    <span className="text-purple-600 text-sm font-bold">⚙️</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground">Settings & Recipients</h3>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Priority Field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="priority" className="text-sm font-medium text-foreground flex items-center gap-1">
+                      Priority Level <span className="text-destructive">*</span>
+                    </Label>
+                    <Select<PriorityOption, false>
+                      name="priority"
+                      options={priorityOptions}
+                      value={priorityOptions.find(
+                        (option) => option.value === formData.priority
+                      )}
+                      onChange={handlePriorityChange}
+                      placeholder="Choose priority level"
+                      isDisabled={isSubmitting}
+                      styles={prioritySelectStyles}
+                      formatOptionLabel={(option) => (
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant={option.badge}
+                            className={`text-xs ${
+                              option.value === 'high'
+                                ? 'bg-red-600 text-white hover:bg-red-700'
+                                : option.value === 'medium'
+                                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                : 'bg-gray-600 text-white hover:bg-gray-700'
+                            }`}
+                          >
+                            {option.label}
+                          </Badge>
+                        </div>
+                      )}
+                    />
+                    {errors.priority && (
+                      <p className="text-sm text-destructive flex items-center gap-1">
+                        <span className="text-xs">⚠️</span> {errors.priority}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Recipients Summary */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-foreground">
+                      Recipients Summary
+                    </Label>
+                    <div className="p-3 bg-muted/50 rounded-lg border">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-foreground/70">Selected Users</span>
+                        <span className="text-sm font-semibold text-foreground">
+                          {formData.tokens.length} / {validUsers.length}
+                        </span>
+                      </div>
+                      <div className="mt-2 flex items-center gap-2">
+                        <div className="flex-1 bg-muted rounded-full h-2">
+                          <div
+                            className="bg-primary h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${validUsers.length > 0 ? (formData.tokens.length / validUsers.length) * 100 : 0}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-foreground/60">
+                          {Math.round(validUsers.length > 0 ? (formData.tokens.length / validUsers.length) * 100 : 0)}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* User Selection */}
+                <div className="mt-6 space-y-2">
+                  <Label className="text-sm font-medium text-foreground flex items-center gap-1">
+                    Select Recipients <span className="text-destructive">*</span>
+                    <span className="text-muted-foreground font-normal text-xs">(Search and select users or choose all)</span>
+                  </Label>
+                  <Select<UserOption, true>
+                    name="tokens"
+                    isMulti
+                    options={userOptions}
+                    value={getSelectedUserOptions()}
+                    onChange={handleUserSelection}
+                    placeholder={
+                      isLoadingUsers ? "Loading users..." : "Search and select recipients..."
+                    }
+                    isDisabled={isSubmitting || isLoadingUsers}
+                    styles={userSelectStyles}
+                    isLoading={isLoadingUsers}
+                    closeMenuOnSelect={false}
+                    hideSelectedOptions={false}
+                  />
+                  {errors.tokens && (
+                    <p className="text-sm text-destructive flex items-center gap-1">
+                      <span className="text-xs">⚠️</span> {errors.tokens}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between text-xs text-foreground/60">
+                    <span>{formData.tokens.length} recipients selected</span>
+                    <span>{validUsers.length} total users available</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Enhanced Preview Section */}
+              <div className="bg-card border rounded-xl p-6 shadow-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="p-1.5 bg-green-100 rounded-md">
+                    <span className="text-green-600 text-sm font-bold">👁️</span>
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground">Live Preview</h3>
+                </div>
+                <div className="bg-gradient-to-br from-background to-muted/20 border rounded-xl p-5 shadow-inner">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 bg-primary/10 rounded-full flex-shrink-0">
+                      <Bell className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between mb-2">
+                        <h4 className="font-semibold text-base text-foreground truncate pr-2">
+                          {formData.title || "Your notification title will appear here"}
+                        </h4>
+                        <Badge
+                          variant={getPriorityColor(formData.priority)}
+                          className={`capitalize text-xs font-medium flex-shrink-0 ${
+                            formData.priority === 'high'
+                              ? 'bg-red-600 text-white hover:bg-red-700'
+                              : formData.priority === 'medium'
+                              ? 'bg-blue-600 text-white hover:bg-blue-700'
+                              : 'bg-gray-600 text-white hover:bg-gray-700'
+                          }`}
+                        >
+                          {formData.priority}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {formData.body || "Your notification message will appear here. This is where the detailed content of your notification will be displayed to users."}
+                      </p>
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/50">
+                        <p className="text-xs text-muted-foreground">
+                          Just now
+                        </p>
+                        <div className="flex items-center gap-2">
+                          {formData.sendPush && (
+                            <div className="flex items-center gap-1 text-xs text-blue-600">
+                              <Bell className="h-3 w-3" />
+                              <span>Push</span>
+                            </div>
+                          )}
+                          {formData.sendEmail && (
+                            <div className="flex items-center gap-1 text-xs text-green-600">
+                              <Send className="h-3 w-3" />
+                              <span>Email</span>
+                            </div>
+                          )}
+                          <span className="text-xs text-muted-foreground">
+                            • {formData.tokens.length || "0"} recipient{formData.tokens.length !== 1 ? "s" : ""}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-foreground/60 mt-3 text-center">
+                  This is how your notification will appear to users
+                </p>
               </div>
             </div>
           </div>
 
-          <SheetFooter className="border-t pt-4 gap-3 flex justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
-              disabled={isSubmitting}
-              className="px-6 py-2 border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 font-medium transition-all duration-200"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              disabled={isSubmitting || formData.tokens.length === 0 || (!formData.sendPush && !formData.sendEmail)}
-              onClick={handleSubmit}
-              className="px-6 py-2 bg-[#0997be] hover:bg-[#0997be] disabled:bg-blue-400 text-white font-medium shadow-sm hover:shadow-md transition-all duration-200"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <Send className="mr-2 h-4 w-4" />
-                  Send Notifications
-                </>
-              )}
-            </Button>
-          </SheetFooter>
+          <div className="border-t bg-muted/30 px-8 py-6">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-foreground/80">
+                {formData.tokens.length > 0 && (
+                  <span>
+                    Ready to send to <strong className="text-foreground font-semibold">{formData.tokens.length}</strong> recipient{formData.tokens.length !== 1 ? "s" : ""}
+                    {(formData.sendPush || formData.sendEmail) && (
+                      <span className="ml-1 text-foreground/70">
+                        via {(formData.sendPush && formData.sendEmail) ? "push & email" :
+                             formData.sendPush ? "push notification" : "email"}
+                      </span>
+                    )}
+                  </span>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => handleOpenChange(false)}
+                  disabled={isSubmitting}
+                  className="px-6 py-2.5 border-border hover:bg-muted hover:border-primary/50 text-foreground font-medium transition-all duration-200"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  disabled={isSubmitting || formData.tokens.length === 0 || (!formData.sendPush && !formData.sendEmail)}
+                  onClick={handleSubmit}
+                  className="px-6 py-2.5 bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground text-white font-medium shadow-sm hover:shadow-md transition-all duration-200"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 text-white animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="mr-2 h-4 w-4" />
+                      Send Notifications
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
