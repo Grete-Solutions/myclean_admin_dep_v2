@@ -312,41 +312,70 @@ export default function AddNotificationSheet({
 
       // Send email notifications if enabled
       if (formData.sendEmail) {
-        const emailPromises = formData.tokens.map(async (token) => {
+        const emailResults = [];
+        const emailErrors = [];
+
+        // Process emails individually to continue on failures
+        for (const token of formData.tokens) {
           const user = users.find((u) => u.fcmToken === token);
           if (!user || !user.email) {
             console.warn(`No email found for token: ${token}`);
-            return;
+            emailErrors.push({ email: token, message: "No email found for this user" });
+            continue;
           }
 
-          const emailPayload = {
-            title: formData.title,
-            message: formData.body,
-            email: user.email,
-          };
+          try {
+            const emailPayload = {
+              title: formData.title,
+              message: formData.body,
+              email: user.email,
+            };
 
-          const emailResponse = await fetch("/api/POST/sendEmailNOtifications", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(emailPayload),
-          });
+            const emailResponse = await fetch("/api/POST/sendEmailNOtifications", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(emailPayload),
+            });
 
-          if (!emailResponse.ok) {
-            const errorData = await emailResponse.json().catch(() => ({
-              message: "Unknown error",
-            }));
-            throw new Error(`Email notification error for ${user.email}: ${errorData.message || `HTTP error! status: ${emailResponse.status}`}`);
+            if (!emailResponse.ok) {
+              const errorData = await emailResponse.json().catch(() => ({
+                message: "Unknown error",
+              }));
+              emailErrors.push({
+                email: user.email,
+                message: errorData.message || `HTTP error! status: ${emailResponse.status}`
+              });
+              continue;
+            }
+
+            emailResults.push({ email: user.email });
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : "Unknown error";
+            emailErrors.push({ email: user.email, message: errorMessage });
           }
-        });
+        }
 
-        await Promise.all(emailPromises);
-        emailSuccess = true;
-        toast.success("Email notifications sent successfully!", {
-          duration: 3000,
-          position: "top-right",
-        });
+        // Show results
+        if (emailResults.length > 0) {
+          emailSuccess = true;
+          if (emailErrors.length === 0) {
+            toast.success("All email notifications sent successfully!", {
+              duration: 3000,
+              position: "top-right",
+            });
+          } else {
+            toast.success(`${emailResults.length} email notifications sent successfully! ${emailErrors.length} failed.`, {
+              duration: 4000,
+              position: "top-right",
+            });
+          }
+        }
+
+        if (emailErrors.length > 0) {
+          console.warn("Email notification errors:", emailErrors);
+        }
       }
 
       // Only reset and close if at least one notification type was sent successfully
@@ -469,10 +498,10 @@ export default function AddNotificationSheet({
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetTrigger asChild>
         <Button
-          className="bg-primary hover:bg-primary/90 transition-transform duration-200 rounded-lg px-4 py-2 transform hover:scale-105"
+          className="bg-[#0997be] hover:bg-[#0997be] text-white font-medium shadow-sm hover:shadow-md transition-all duration-200"
           variant="default"
         >
-          <Plus className="mr-2 h-5 w-5" />
+          <Plus className="mr-2 h-4 w-4" />
           New Notification
         </Button>
       </SheetTrigger>
@@ -667,13 +696,13 @@ export default function AddNotificationSheet({
             </div>
           </div>
 
-          <SheetFooter className="border-t pt-4 gap-2 flex justify-end">
+          <SheetFooter className="border-t pt-4 gap-3 flex justify-end">
             <Button
               type="button"
               variant="outline"
               onClick={() => handleOpenChange(false)}
               disabled={isSubmitting}
-              className="rounded-lg hover:bg-muted transition-transform duration-200 transform hover:scale-105 border-2"
+              className="px-6 py-2 border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 font-medium transition-all duration-200"
             >
               Cancel
             </Button>
@@ -681,16 +710,16 @@ export default function AddNotificationSheet({
               type="button"
               disabled={isSubmitting || formData.tokens.length === 0 || (!formData.sendPush && !formData.sendEmail)}
               onClick={handleSubmit}
-              className="bg-primary hover:bg-primary/90 transition-transform duration-200 rounded-lg transform hover:scale-105"
+              className="px-6 py-2 bg-[#0997be] hover:bg-[#0997be] disabled:bg-blue-400 text-white font-medium shadow-sm hover:shadow-md transition-all duration-200"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Sending...
                 </>
               ) : (
                 <>
-                  <Send className="mr-2 h-5 w-5" />
+                  <Send className="mr-2 h-4 w-4" />
                   Send Notifications
                 </>
               )}

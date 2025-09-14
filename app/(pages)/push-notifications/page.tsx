@@ -12,7 +12,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, MoreHorizontal, Bell } from "lucide-react"
+import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -104,17 +104,22 @@ const NotificationActions = ({ notification }: { notification: Notification }) =
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuLabel className="text-gray-900 font-semibold">Actions</DropdownMenuLabel>
         <DropdownMenuItem
           onClick={() => navigator.clipboard.writeText(notification.id)}
+          className="cursor-pointer hover:bg-blue-50 focus:bg-blue-50"
         >
           Copy notification ID
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>Mark as read</DropdownMenuItem>
-        <DropdownMenuItem>View details</DropdownMenuItem>
-        <DropdownMenuItem className="text-destructive">
+        <DropdownMenuItem className="cursor-pointer hover:bg-gray-50 focus:bg-gray-50">
+          Mark as read
+        </DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer hover:bg-gray-50 focus:bg-gray-50">
+          View details
+        </DropdownMenuItem>
+        <DropdownMenuItem className="cursor-pointer text-red-600 hover:bg-red-50 focus:bg-red-50 hover:text-red-700">
           Delete notification
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -290,8 +295,6 @@ export default function NotificationsDataTable() {
       <div className="flex items-center justify-between py-4">
         <div className="flex justify-between items-center gap-2">
           <div>
-          <Bell className="h-5 w-5" />
-          <h2 className="text-xl font-semibold">Notifications</h2>
           {loading && (
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary ml-2"></div>
           )}  </div>
@@ -327,7 +330,11 @@ export default function NotificationsDataTable() {
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto" disabled={loading}>
+            <Button
+              variant="outline"
+              className="ml-auto px-4 py-2 border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 font-medium transition-all duration-200 disabled:opacity-50"
+              disabled={loading}
+            >
               Columns <ChevronDown className="ml-2 h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -428,6 +435,7 @@ export default function NotificationsDataTable() {
             size="sm"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage() || loading}
+            className="px-4 py-2 border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 font-medium transition-all duration-200 disabled:opacity-50"
           >
             Previous
           </Button>
@@ -436,6 +444,7 @@ export default function NotificationsDataTable() {
             size="sm"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage() || loading}
+            className="px-4 py-2 border-gray-300 hover:bg-gray-50 hover:border-gray-400 text-gray-700 font-medium transition-all duration-200 disabled:opacity-50"
           >
             Next
           </Button>
