@@ -1,5 +1,17 @@
 import { Toaster } from "@/components/ui/sonner"
 import '../globals.css'
+import { Geist, Geist_Mono } from "next/font/google";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
 export default function LoginLayout({
     children,
   }: Readonly<{
@@ -7,9 +19,9 @@ export default function LoginLayout({
   }>) {
     return (
       <html lang="en">
-        
+
         <body
-          className={`antialiased`}
+          className={`${geistSans.variable} ${geistMono.variable} flex h-screen antialiased`}
         ><Toaster/>
                     {children}
         </body>

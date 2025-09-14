@@ -17,6 +17,7 @@ const OtpPage = () => {
   const router = useRouter();
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     if (emailFromParams) {
@@ -41,7 +42,15 @@ const OtpPage = () => {
       const otpData = await otpResponse.json();
   
       if (!otpResponse.ok) {
-        throw new Error(otpData.error || otpData.message || 'Invalid OTP code');
+        // Log the full response for debugging (but don't show to user)
+        console.error('OTP verification failed:', {
+          status: otpResponse.status,
+          statusText: otpResponse.statusText,
+          responseData: otpData
+        });
+
+        // Always show the same hardcoded message regardless of backend error
+        throw new Error('Invalid verification code');
       }
       
       // Retrieve credentials from sessionStorage
@@ -104,16 +113,9 @@ const OtpPage = () => {
       }
     } catch (error) {
       console.error('Error:', error);
-      if (error instanceof Error) {
-        toast.error(error.message || 'Verification failed. Please try again.');
-      } else {
-        toast.error('Verification failed. Please try again.');
-      }
-      
-      // Redirect back to login on error
-      // setTimeout(() => {
-      //   router.push('/login');
-      // }, 1500);
+      const errorMsg = error instanceof Error ? error.message : 'Verification failed. Please try again.';
+      setErrorMessage(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -209,43 +211,79 @@ const OtpPage = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen flex-col justify-center overflow-hidden bg-gray-50 py-12">
-      <div className="relative bg-white px-6 pt-10 pb-9 shadow-xl mx-auto w-full max-w-lg rounded-2xl">
-        <div className="mx-auto flex w-full max-w-md flex-col space-y-16">
-          <div className="flex flex-col items-center justify-center text-center space-y-2">
-            <div className="font-semibold text-3xl">
-              <p>Email Verification</p>
+    <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white px-8 pt-10 pb-9 shadow-xl rounded-2xl">
+          <div className="mx-auto flex w-full max-w-lg flex-col space-y-16">
+            <div className="flex flex-col items-center justify-center text-center space-y-2">
+              <div className="font-semibold text-3xl">
+                <p>Email Verification</p>
+              </div>
+              <div className="flex flex-row text-sm font-medium text-gray-400">
+                <p>We have sent a code to your email {email}</p>
+              </div>
             </div>
-            <div className="flex flex-row text-sm font-medium text-gray-400">
-              <p>We have sent a code to your email {email}</p>
-            </div>
-          </div>
 
           <div>
             <form id="otp-form" onSubmit={handleSubmit}>
-              <div className="flex flex-col space-y-16">
+              <div className="flex flex-col space-y-12">
                 <Input value={email} className="hidden" type="text" readOnly />
-                <div className="flex flex-row items-center justify-between mx-auto space-x-3 w-full">
+
+                {/* OTP Progress Indicator */}
+                <div className="text-center">
+                  <div className="flex justify-center space-x-1 mb-4">
+                    {[0, 1, 2, 3, 4, 5].map((_, index) => (
+                      <div
+                        key={index}
+                        className={`w-2 h-2 rounded-full transition-colors duration-200 ${
+                          Otp[index] ? 'bg-[#0A8791]' : 'bg-gray-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Enter the 6-digit code sent to <strong>{email}</strong>
+                  </p>
+                </div>
+
+                <div className="flex flex-row items-center justify-center mx-auto space-x-3 w-full max-w-md">
                   {[0, 1, 2, 3, 4, 5].map((_, index) => (
-                    <div key={index} className="w-full h-16">
+                    <div key={index} className="w-12 h-14">
                       <input
                         ref={(el) => {
                           if (el) {
                             inputRefs.current[index] = el;
                           }
                         }}
-                        className="w-full h-full flex flex-col items-center justify-center text-center px-5 outline-none rounded-xl border border-gray-200 text-lg bg-white focus:bg-gray-50 focus:ring-1 ring-[#0A8791]"
+                        className={`w-full h-full flex flex-col items-center justify-center text-center px-2 outline-none rounded-lg border-2 text-xl font-bold transition-all duration-200 ${
+                          Otp[index]
+                            ? 'border-[#0A8791] bg-blue-50 text-[#0A8791]'
+                            : 'border-gray-300 bg-white hover:border-gray-400 focus:border-[#0A8791] focus:ring-2 focus:ring-[#0A8791]/20'
+                        } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                         type="text"
                         maxLength={1}
                         value={Otp[index]}
-                        onChange={(event) => handleInputChange(index, event)}
+                        onChange={(event) => {
+                          handleInputChange(index, event);
+                          if (errorMessage) setErrorMessage(''); // Clear error on input
+                        }}
                         onKeyDown={(event) => handleKeyDown(index, event)}
                         onPaste={handlePaste}
                         disabled={loading}
+                        placeholder=""
                       />
                     </div>
                   ))}
                 </div>
+
+                {/* Error Display */}
+                {errorMessage && (
+                  <div className="text-center">
+                    <p className="text-sm text-red-600 bg-red-50 px-4 py-2 rounded-lg border border-red-200">
+                      {errorMessage}
+                    </p>
+                  </div>
+                )}
 
                 <div className="flex flex-col space-y-5">
                   <div>
@@ -273,6 +311,7 @@ const OtpPage = () => {
                 </div>
               </div>
             </form>
+          </div>
           </div>
         </div>
       </div>
