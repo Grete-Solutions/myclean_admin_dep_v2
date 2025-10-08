@@ -35,6 +35,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 
 
 type UserData = {
@@ -58,7 +67,72 @@ type UserData = {
   action: React.ReactNode;
 };
 
- const columns: ColumnDef<UserData>[] = [
+type UserDetails = {
+  id: string;
+  firstname: string;
+  lastname: string;
+  phone: string;
+  userType: number;
+  email: string;
+  country: string;
+  city: string;
+  isDelete: boolean;
+  isDisable: boolean;
+  isSuspend: boolean;
+  referral: string;
+  referredBy: string;
+  pickup_address: string;
+  profilePicture: string;
+  pickup_location: {
+    _latitude: number;
+    _longitude: number;
+  };
+  fcmToken: string;
+  createdAt: {
+    _seconds: number;
+    _nanoseconds: number;
+  };
+  updatedAt: {
+    _seconds: number;
+    _nanoseconds: number;
+  };
+  // Add more fields as needed
+};
+
+type PickupData = {
+  id: string;
+  userId: string;
+  status: string;
+  createdAt: {
+    _seconds: number;
+    _nanoseconds: number;
+  };
+  // Add more fields
+};
+
+type PaymentData = {
+  id: string;
+  userId: string;
+  reference: string;
+  amount: string;
+  status: string;
+  customermsisdn: string;
+  channel: string;
+  paymentMethod: string;
+  desc: string;
+  createdAt: {
+    _seconds: number;
+    _nanoseconds: number;
+  };
+  updatedAt: {
+    _seconds: number;
+    _nanoseconds: number;
+  };
+  // Add more fields
+};
+
+function UsersDataTable({ data, onViewDetails }: { data: UserData[], onViewDetails: (userId: string) => void }) {
+  const columns: ColumnDef<UserData>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -151,7 +225,7 @@ type UserData = {
               Copy ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>View details</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onViewDetails(data.id)}>View details</DropdownMenuItem>
             <DropdownMenuItem>Edit</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -160,8 +234,6 @@ type UserData = {
   },
 ];
 
-
-function UsersDataTable({ data }: { data: UserData[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -191,9 +263,9 @@ function UsersDataTable({ data }: { data: UserData[] }) {
       <div className="flex items-center py-4">
         <Input
           placeholder="Filter by firstName..."
-          value={(table.getColumn("firstName")?.getFilterValue() as string) ?? ""}
+          value={(table.getColumn("firstname")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("firstName")?.setFilterValue(event.target.value)
+            table.getColumn("firstname")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -302,6 +374,13 @@ export default function UserDatasPage() {
   const [loading, setLoading] = React.useState<boolean>(true);
   const [error, setError] = React.useState<string | null>(null);
 
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [userDetails, setUserDetails] = React.useState<UserDetails | null>(null);
+  const [userPickups, setUserPickups] = React.useState<PickupData[]>([]);
+  const [userPayments, setUserPayments] = React.useState<PaymentData[]>([]);
+  const [detailsLoading, setDetailsLoading] = React.useState(false);
+
     const fetchBeans = async () => {
       try {
         const response = await fetch("/api/GET/user-management/approvedUsers");
@@ -321,12 +400,34 @@ export default function UserDatasPage() {
     fetchBeans();
   }, []);
 
+  const handleViewDetails = async (userId: string) => {
+    setDialogOpen(true);
+    setDetailsLoading(true);
+
+    try {
+      // Fetch comprehensive user details
+      const response = await fetch(`/api/GET/user-management/userDetails?userId=${userId}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setUserDetails(data.data.user);
+        setUserPickups(data.data.pickups);
+        setUserPayments(data.data.payments);
+      } else {
+        console.error('Failed to fetch user details:', data.error);
+      }
+
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
   return (
     <div className="container mx-auto py-10">
       <div className="flex items-center justify-between">
-   
 
-     
 
 
 
@@ -336,7 +437,136 @@ export default function UserDatasPage() {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
         </div>
       )}      {error && <p className="text-center text-red-500">{error}</p>}
-      {!loading && <UsersDataTable data={UserDatas} />}
+      {!loading && <UsersDataTable data={UserDatas} onViewDetails={handleViewDetails} />}
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>User Details</DialogTitle>
+            <DialogDescription>
+              Detailed information about the selected user
+            </DialogDescription>
+          </DialogHeader>
+
+          {detailsLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+            </div>
+          ) : userDetails ? (
+            <div className="space-y-6">
+              {/* User Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Basic Information</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium">First Name</label>
+                    <p>{userDetails.firstname}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Last Name</label>
+                    <p>{userDetails.lastname}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Email</label>
+                    <p>{userDetails.email}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Phone</label>
+                    <p>{userDetails.phone}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Country</label>
+                    <p>{userDetails.country}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">City</label>
+                    <p>{userDetails.city}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">User Type</label>
+                    <p>{userDetails.userType}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Referral Code</label>
+                    <p>{userDetails.referral}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Pickup Address</label>
+                    <p>{userDetails.pickup_address}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Disabled</label>
+                    <p>{userDetails.isDisable ? 'Yes' : 'No'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Suspended</label>
+                    <p>{userDetails.isSuspend ? 'Yes' : 'No'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Deleted</label>
+                    <p>{userDetails.isDelete ? 'Yes' : 'No'}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Recent Pickups */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Pickup Requests</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {userPickups.length > 0 ? (
+                    <div className="space-y-2">
+                      {userPickups.slice(0, 5).map((pickup) => (
+                        <div key={pickup.id} className="flex justify-between items-center p-2 border rounded">
+                          <div>
+                            <p className="font-medium">Pickup #{pickup.id}</p>
+                            <p className="text-sm text-gray-500">Status: {pickup.status}</p>
+                          </div>
+                          <Badge variant="outline">{pickup.status}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p>No pickup requests found</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Payments */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Payment History</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {userPayments.length > 0 ? (
+                    <div className="space-y-2">
+                      {userPayments.slice(0, 5).map((payment) => (
+                        <div key={payment.id} className="flex justify-between items-center p-2 border rounded">
+                          <div>
+                            <p className="font-medium">Payment {payment.reference}</p>
+                            <p className="text-sm text-gray-500">Amount: ${payment.amount}</p>
+                            <p className="text-sm text-gray-500">Method: {payment.paymentMethod} ({payment.channel})</p>
+                          </div>
+                          <Badge variant={payment.status === 'paid' ? 'default' : 'secondary'}>
+                            {payment.status}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p>No payment history found</p>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            <p>Failed to load user details</p>
+          )}
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

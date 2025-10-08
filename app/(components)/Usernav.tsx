@@ -43,8 +43,8 @@ export function UserNav() {
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                    <button 
-                        onClick={() => signOut({ callbackUrl: '/login' })}
+                    <button
+                        onClick={() => signOut({ callbackUrl: `${window.location.origin}/login` })}
                         className="w-full text-left"
                     >
                         Log out
