@@ -33,15 +33,39 @@ export async function GET(request: NextRequest) {
     console.log('User data response:', userData);
 
     // Fetch user pickups
-    const pickupsResponse = await fetch(`${process.env.URLB}/booking/get?userId=${userId}&limit=10`, {
+    const pickupsResponse = await fetch(`${process.env.URLB}/orders?customerPhone=${userId}&limit=10`, {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
     });
 
-    const pickupsData = pickupsResponse.ok ? await pickupsResponse.json() : { data: [] };
-    console.log('Pickups data response:', pickupsData);
+    let pickupsData = { data: [] };
+    if (pickupsResponse.ok) {
+      const backendPickups = await pickupsResponse.json();
+      const transformedPickups = (backendPickups.data || []).map((item: any) => {
+        let createdAt = item.createdAt;
+        if (typeof item.createdAt === 'string') {
+          const date = new Date(item.createdAt);
+          createdAt = {
+            _seconds: Math.floor(date.getTime() / 1000),
+            _nanoseconds: (date.getTime() % 1000) * 1e6
+          };
+        } else if (item.pickupDate) {
+          createdAt = item.pickupDate;
+        }
+
+        return {
+          ...item,
+          actualPrice: item.totalCost || 0,
+          netPrice: item.totalCost || 0,
+          createdAt: createdAt,
+          vehicleLicenseNumber: item.vehicleLicenseNumber || "N/A",
+        };
+      });
+      pickupsData = { data: transformedPickups };
+    }
+    console.log('Pickups data response (transformed):', pickupsData);
 
     // Fetch user payments
     const paymentsResponse = await fetch(`${process.env.URLB}/payment/get?userId=${userId}&limit=10`, {

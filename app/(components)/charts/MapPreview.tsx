@@ -71,16 +71,11 @@ interface GeocodedAddress {
 
 // No mock data - using your original API fetch logic
 
-// Reverse geocoding function
+// Reverse geocoding function — proxied through our API to avoid CORS and rate limits
 const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
   try {
     const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-      {
-        headers: {
-          "User-Agent": "UserLocationApp/1.0",
-        },
-      },
+      `/api/GET/geocode?lat=${lat}&lon=${lng}`,
     )
 
     if (!response.ok) {
@@ -91,12 +86,12 @@ const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
     const { address } = data
     const parts = []
 
-    if (address.road) parts.push(address.road)
-    if (address.suburb) parts.push(address.suburb) 
-    if (address.city) parts.push(address.city)
-    if (address.state) parts.push(address.state)
+    if (address?.road) parts.push(address.road)
+    if (address?.suburb) parts.push(address.suburb)
+    if (address?.city) parts.push(address.city)
+    if (address?.state) parts.push(address.state)
 
-    return parts.length > 0 ? parts.join(", ") : data.display_name
+    return parts.length > 0 ? parts.join(", ") : data.display_name || "Location unavailable"
   } catch (error) {
     console.error("Reverse geocoding error:", error)
     return "Location unavailable"
