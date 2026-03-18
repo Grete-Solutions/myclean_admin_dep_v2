@@ -4,7 +4,7 @@ import { NextAuthOptions } from "next-auth";
 
  const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET, 
-  debug: process.env.NODE_ENV === "production",
+  debug: process.env.NODE_ENV === "development",
   session: {
     strategy: "jwt",
     maxAge: 3000000,
@@ -95,8 +95,6 @@ import { NextAuthOptions } from "next-auth";
         session.user.displayName = token.displayName as string;
         session.idToken = token.idToken as string; // Make the token available in the session
       }
-            console.log('Final session data:', session);
-
       return session;
     },
   },

@@ -9,19 +9,13 @@ export default withAuth(
     const isAuthenticated = !!token;
     const isLoginPage = req.nextUrl.pathname === "/login";
 
-    console.log('Middleware - Path:', req.nextUrl.pathname);
-    console.log('Middleware - Token exists:', !!token);
-    console.log('Middleware - Is login page:', isLoginPage);
-
     // If user is not authenticated and trying to access a protected route
     if (!isAuthenticated && !isLoginPage) {
-      console.log('Redirecting to login - not authenticated');
       return NextResponse.redirect(new URL("/login", req.url));
     }
 
     // If user is authenticated and trying to access login page
     if (isAuthenticated && isLoginPage) {
-      console.log('Redirecting to home - already authenticated');
       return NextResponse.redirect(new URL("/", req.url));
     }
 

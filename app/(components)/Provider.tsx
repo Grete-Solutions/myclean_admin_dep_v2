@@ -13,7 +13,8 @@ export default function Providers({ children }: ProviderProps) {
 
   return (
     <SessionProvider>
-<Provider store={store}>{children}</Provider>;    </SessionProvider>
+      <Provider store={store}>{children}</Provider>
+    </SessionProvider>
   );
 }
 

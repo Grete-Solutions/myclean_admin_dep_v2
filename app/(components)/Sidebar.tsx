@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { ChevronDown, ChevronRight, Home, BarChart2, Settings, GitBranch, MapPin, User, Users, MessageSquare, Bell, HelpCircle, FileText, DollarSign, ChevronLeft, Shield, Sliders, Car, Globe, FileCheck, FileClock, FileX, Clock, FileTerminal, CheckCircle, Clock3, Star, Wallet2, UserCheck, UserX, UserMinus, UserX2,  AlertCircle, BarChart, PieChart, Menu } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 // Define types for the navigation data
@@ -314,7 +315,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
                               <ul className="mt-2 ml-6 space-y-1 border-l-2 border-slate-100 pl-4">
                                 {item.subMenuItems.map((subItem, subIndex) => (
                                   <li key={subIndex}>
-                                    <a 
+                                    <Link 
                                       href={subItem.path}
                                       className={`flex items-center py-2 px-3 rounded-lg text-sm transition-all duration-200 group relative
                                       ${isActiveLink(subItem.path) 
@@ -330,15 +331,15 @@ const Sidebar: React.FC<SidebarProps> = () => {
                                       {isActiveLink(subItem.path) && (
                                         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-full"></div>
                                       )}
-                                    </a>
+                                    </Link>
                                   </li>
                                 ))}
                               </ul>
                             )}
                           </div>
                         ) : (
-                          <a 
-                            href={item.path}
+                          <Link 
+                            href={item.path!}
                             className={`flex items-center px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative
                             ${isActiveLink(item.path) 
                               ? 'bg-gradient-to-r from-[#0A8791] to-[#0d9ba8] text-white shadow-md' 
@@ -359,7 +360,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
                             {isActiveLink(item.path) && (
                               <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full"></div>
                             )}
-                          </a>
+                          </Link>
                         )}
                       </li>
                     ))}
@@ -441,7 +442,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
                                   <ul className="space-y-1">
                                     {item.subMenuItems.map((subItem, subIndex) => (
                                       <li key={subIndex}>
-                                        <a 
+                                        <Link 
                                           href={subItem.path}
                                           className={`flex items-center py-2.5 px-3 rounded-lg text-sm transition-all duration-200 group
                                           ${isActiveLink(subItem.path) 
@@ -460,7 +461,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
                                             </span>
                                           </div>
                                           <span className="font-medium">{subItem.title}</span>
-                                        </a>
+                                        </Link>
                                       </li>
                                     ))}
                                   </ul>
@@ -469,8 +470,8 @@ const Sidebar: React.FC<SidebarProps> = () => {
                             )}
                           </>
                         ) : (
-                          <a 
-                            href={item.path}
+                          <Link 
+                            href={item.path!}
                             className={`flex items-center justify-center w-12 h-12 rounded-lg transition-all duration-200 relative mx-auto
                             ${isActiveLink(item.path) 
                               ? 'bg-gradient-to-r from-[#0A8791] to-[#0d9ba8] shadow-md' 
@@ -491,7 +492,7 @@ const Sidebar: React.FC<SidebarProps> = () => {
                             {isActiveLink(item.path) && (
                               <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#0A8791] rounded-r-full"></div>
                             )}
-                          </a>
+                          </Link>
                         )}
                         
                         {/* Tooltip on hover - hide on mobile */}
