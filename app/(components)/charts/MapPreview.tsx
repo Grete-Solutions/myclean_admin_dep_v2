@@ -250,32 +250,32 @@ export const MapPreviewCard: React.FC = () => {
     setGeocodingProgress({ current: 0, total: validUsers.length })
     const addresses: Record<string, string> = {}
 
-    // Process users in batches to avoid rate limiting
-    const batchSize = 3
-    for (let i = 0; i < validUsers.length; i += batchSize) {
-      const batch = validUsers.slice(i, i + batchSize)
+    // Process users one at a time to respect Nominatim rate limits
+    for (let i = 0; i < validUsers.length; i++) {
+      const user = validUsers[i]
 
-      await Promise.all(
-        batch.map(async (user) => {
-          try {
-            const address = await reverseGeocode(user.pickup_location._latitude, user.pickup_location._longitude)
-            addresses[user.id] = address
-            setGeocodingProgress((prev) => ({ ...prev, current: prev.current + 1 }))
-          } catch (error) {
-            console.error(`Failed to geocode location for user ${user.id}:`, error)
-            addresses[user.id] = user.pickup_address || "Location unavailable"
-            setGeocodingProgress((prev) => ({ ...prev, current: prev.current + 1 }))
-          }
-        }),
-      )
+      // If user already has a pickup_address, use it directly — no geocoding needed
+      if (user.pickup_address && user.pickup_address.trim().length > 0) {
+        addresses[user.id] = user.pickup_address
+        setGeocodingProgress((prev) => ({ ...prev, current: prev.current + 1 }))
+      } else {
+        try {
+          const address = await reverseGeocode(user.pickup_location._latitude, user.pickup_location._longitude)
+          addresses[user.id] = address
+        } catch (error) {
+          console.error(`Failed to geocode location for user ${user.id}:`, error)
+          addresses[user.id] = "Location unavailable"
+        }
+        setGeocodingProgress((prev) => ({ ...prev, current: prev.current + 1 }))
 
-      // Update state with current batch results
-      setGeocodedAddresses((prev) => ({ ...prev, ...addresses }))
-
-      // Add delay between batches to respect rate limits
-      if (i + batchSize < validUsers.length) {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        // Add delay between geocoding requests
+        if (i < validUsers.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 2000))
+        }
       }
+
+      // Update state after each user
+      setGeocodedAddresses((prev) => ({ ...prev, ...addresses }))
     }
   }, [])
 
