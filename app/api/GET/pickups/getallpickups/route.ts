@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
     // Handle cases where data might be at top level or under .data or .orders
     const rawData = Array.isArray(backendData) ? backendData : (backendData.data || backendData.orders || []);
     
-    const transformedData = rawData.map((item: any) => {
+    const transformedData = rawData.map((item: Record<string, unknown>) => {
       let createdAt = item.createdAt;
       if (typeof item.createdAt === 'string') {
         const date = new Date(item.createdAt);

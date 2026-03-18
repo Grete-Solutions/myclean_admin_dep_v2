@@ -80,9 +80,11 @@ const DashboardCard: React.FC = () => {
           </div>
         </div>
       </div>
+      <div className="mt-5">
+        <MapPreviewCard />
+      </div>
       <div className="grid mt-5 grid-cols-1 md:grid-cols-2 gap-4">
         <PickupsByRegion />
-        <MapPreviewCard />
         <PickupDetails />
         <PickupChart />
       </div>

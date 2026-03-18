@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react"
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet"
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { MapPin, Users, UserCheck, UserX, Clock, Phone, Mail, Calendar, X } from "lucide-react"
+import { MapPin, Users, UserCheck, UserX, Clock, Phone, Mail, Calendar, X, Navigation, ChevronRight } from "lucide-react"
+import L from "leaflet"
 
 // Import Leaflet CSS
 const LEAFLET_CSS = `
@@ -69,7 +70,12 @@ interface GeocodedAddress {
   }
 }
 
-// No mock data - using your original API fetch logic
+interface ServiceLocation {
+  id: string
+  city: string
+  isActive: boolean
+  coordinates?: { _latitude: number; _longitude: number }[]
+}
 
 // Reverse geocoding function — proxied through our API to avoid CORS and rate limits
 const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
@@ -98,33 +104,70 @@ const reverseGeocode = async (lat: number, lng: number): Promise<string> => {
   }
 }
 
+// Single map controller that handles initial fit and area navigation
+const MapController = ({
+  allUsers,
+  flyTarget,
+  focusKey,
+}: {
+  allUsers: UserData[]
+  flyTarget: { center: [number, number]; zoom: number } | null
+  focusKey: string | null
+}) => {
+  const map = useMap()
+  const initialFitDone = React.useRef(false)
+
+  // Initial fit to all markers on first render
+  useEffect(() => {
+    if (initialFitDone.current || allUsers.length === 0) return
+    initialFitDone.current = true
+
+    const bounds = L.latLngBounds(
+      allUsers.map((u) => [u.pickup_location._latitude, u.pickup_location._longitude] as [number, number])
+    )
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 })
+    }
+  }, [allUsers, map])
+
+  // Fly to area when flyTarget changes
+  useEffect(() => {
+    if (!flyTarget) return
+    map.flyTo(flyTarget.center, flyTarget.zoom, { duration: 1.2 })
+  }, [focusKey, flyTarget, map])
+
+  return null
+}
+
 // Main Map Component
 const MapComponent = ({
   users,
   onMarkerClick,
   geocodedAddresses,
+  flyTarget,
+  focusKey,
 }: {
   users: UserData[]
   onMarkerClick: (user: UserData) => void
   geocodedAddresses: Record<string, string>
+  flyTarget: { center: [number, number]; zoom: number } | null
+  focusKey: string | null
 }) => {
   const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    // Add Leaflet CSS
     if (typeof document !== 'undefined') {
       const style = document.createElement('style')
       style.textContent = LEAFLET_CSS
       document.head.appendChild(style)
-      
-      // Add Leaflet CSS from CDN
+
       const link = document.createElement('link')
       link.rel = 'stylesheet'
       link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
       document.head.appendChild(link)
-      
+
       link.onload = () => setIsReady(true)
-      
+
       return () => {
         document.head.removeChild(style)
         document.head.removeChild(link)
@@ -143,7 +186,7 @@ const MapComponent = ({
 
   if (!isReady) {
     return (
-      <div className="h-[400px] bg-gray-100 flex items-center justify-center rounded-lg">
+      <div className="h-full bg-gray-100 flex items-center justify-center rounded-lg">
         <div className="text-center">
           <div className="animate-spin h-8 w-8 border-2 border-blue-600 border-t-transparent rounded-full mx-auto mb-2"></div>
           <p className="text-sm text-gray-600">Loading map...</p>
@@ -154,7 +197,7 @@ const MapComponent = ({
 
   if (validUsers.length === 0) {
     return (
-      <div className="h-[400px] bg-gray-100 flex items-center justify-center rounded-lg">
+      <div className="h-full bg-gray-100 flex items-center justify-center rounded-lg">
         <div className="text-center">
           <MapPin className="h-12 w-12 mx-auto mb-4 text-gray-400" />
           <p className="text-gray-600">No valid locations to display</p>
@@ -163,26 +206,14 @@ const MapComponent = ({
     )
   }
 
-  // Calculate center and bounds - default to Ghana center
-  const ghanaCenter: [number, number] = [7.9465, -1.0232] // Center of Ghana
-  
-  let center: [number, number] = ghanaCenter
-  
-  if (validUsers.length > 0) {
-    const lats = validUsers.map((user) => user.pickup_location._latitude)
-    const lngs = validUsers.map((user) => user.pickup_location._longitude)
-    
-    center = [
-      (Math.min(...lats) + Math.max(...lats)) / 2,
-      (Math.min(...lngs) + Math.max(...lngs)) / 2
-    ]
-  }
+  // Default center (Ghana)
+  const ghanaCenter: [number, number] = [7.9465, -1.0232]
 
   return (
-    <div className="h-[400px] w-full rounded-lg overflow-hidden border">
+    <div className="h-full w-full rounded-lg overflow-hidden border">
       <MapContainer
-        center={center}
-        zoom={validUsers.length === 0 ? 7 : validUsers.length === 1 ? 15 : 8}
+        center={ghanaCenter}
+        zoom={7}
         style={{ height: "100%", width: "100%" }}
         className="leaflet-container"
       >
@@ -190,6 +221,9 @@ const MapComponent = ({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+
+        {/* Handles initial fit + area navigation */}
+        <MapController allUsers={validUsers} flyTarget={flyTarget} focusKey={focusKey} />
 
         {validUsers.map((user) => {
           const displayAddress = geocodedAddresses[user.id] || user.pickup_address || "Loading location..."
@@ -224,6 +258,32 @@ const MapComponent = ({
   )
 }
 
+// Area sidebar item
+const AreaItem = ({
+  area,
+  isActive,
+  onClick,
+}: {
+  area: ServiceLocation
+  isActive: boolean
+  onClick: () => void
+}) => (
+  <button
+    onClick={onClick}
+    className={`w-full text-left px-3 py-2.5 rounded-lg transition-all duration-200 group flex items-center justify-between ${
+      isActive
+        ? "bg-[#0A8791] text-white shadow-md"
+        : "bg-gray-50 hover:bg-gray-100 text-gray-800"
+    }`}
+  >
+    <div className="flex items-center gap-2 min-w-0">
+      <MapPin className={`h-4 w-4 flex-shrink-0 ${isActive ? "text-white" : "text-[#0A8791]"}`} />
+      <span className="text-sm font-medium truncate">{area.city}</span>
+    </div>
+    <ChevronRight className={`h-3.5 w-3.5 flex-shrink-0 transition-transform ${isActive ? "text-white translate-x-0.5" : "text-gray-400 group-hover:translate-x-0.5"}`} />
+  </button>
+)
+
 export const MapPreviewCard: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -234,6 +294,56 @@ export const MapPreviewCard: React.FC = () => {
     current: 0,
     total: 0,
   })
+  const [activeAreaName, setActiveAreaName] = useState<string | null>(null)
+  const [flyTarget, setFlyTarget] = useState<{ center: [number, number]; zoom: number } | null>(null)
+  const [focusKey, setFocusKey] = useState<string | null>(null)
+  const [serviceLocations, setServiceLocations] = useState<ServiceLocation[]>([])
+
+  // Fetch activated service locations
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const response = await fetch("/api/GET/locations/locations")
+        if (!response.ok) return
+        const data = await response.json()
+        // Only show active locations that have coordinates
+        const active = (data.data || []).filter(
+          (loc: ServiceLocation) => loc.isActive && loc.coordinates && loc.coordinates.length > 0
+        )
+        setServiceLocations(active)
+      } catch (err) {
+        console.error("Error fetching service locations:", err)
+      }
+    }
+    fetchLocations()
+  }, [])
+
+  const handleAreaClick = useCallback((location: ServiceLocation) => {
+    setActiveAreaName(location.city)
+
+    if (location.coordinates && location.coordinates.length > 0) {
+      // Compute center of the polygon coordinates
+      const lats = location.coordinates.map((c) => c._latitude)
+      const lngs = location.coordinates.map((c) => c._longitude)
+      const centerLat = lats.reduce((sum, l) => sum + l, 0) / lats.length
+      const centerLng = lngs.reduce((sum, l) => sum + l, 0) / lngs.length
+
+      // Compute zoom based on polygon spread
+      const latSpread = Math.max(...lats) - Math.min(...lats)
+      const lngSpread = Math.max(...lngs) - Math.min(...lngs)
+      const spread = Math.max(latSpread, lngSpread)
+
+      let zoom = 14
+      if (spread > 0.5) zoom = 10
+      else if (spread > 0.1) zoom = 12
+      else if (spread > 0.05) zoom = 13
+      else if (spread > 0.01) zoom = 14
+      else zoom = 15
+
+      setFlyTarget({ center: [centerLat, centerLng], zoom })
+      setFocusKey(`area-${location.city}-${Date.now()}`)
+    }
+  }, [])
 
   const geocodeUserLocations = useCallback(async (users: UserData[]) => {
     const validUsers = users.filter(
@@ -334,7 +444,7 @@ export const MapPreviewCard: React.FC = () => {
         <CardContent>
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0A8791] mx-auto mb-4"></div>
               <p className="text-gray-600">Loading user data...</p>
             </div>
           </div>
@@ -393,9 +503,9 @@ export const MapPreviewCard: React.FC = () => {
 
   return (
     <Card className="w-full max-w-6xl mx-auto">
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2">
-          <MapPin className="h-5 w-5" />
+          <MapPin className="h-5 w-5 text-[#0A8791]" />
           User Pickup Locations
         </CardTitle>
 
@@ -416,48 +526,99 @@ export const MapPreviewCard: React.FC = () => {
           </div>
         )}
 
-        {/* Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-          <div className="bg-blue-50 p-3 rounded-lg">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-900">Total Users</span>
+        {/* Statistics row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+          <div className="bg-blue-50 p-2.5 rounded-lg">
+            <div className="flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5 text-blue-600" />
+              <span className="text-xs font-medium text-blue-900">Total</span>
             </div>
-            <p className="text-2xl font-bold text-blue-600 mt-1">{stats.total}</p>
+            <p className="text-xl font-bold text-blue-600 mt-0.5">{stats.total}</p>
           </div>
-
-          <div className="bg-green-50 p-3 rounded-lg">
-            <div className="flex items-center gap-2">
-              <UserCheck className="h-4 w-4 text-green-600" />
-              <span className="text-sm font-medium text-green-900">Active</span>
+          <div className="bg-green-50 p-2.5 rounded-lg">
+            <div className="flex items-center gap-1.5">
+              <UserCheck className="h-3.5 w-3.5 text-green-600" />
+              <span className="text-xs font-medium text-green-900">Active</span>
             </div>
-            <p className="text-2xl font-bold text-green-600 mt-1">{stats.active}</p>
+            <p className="text-xl font-bold text-green-600 mt-0.5">{stats.active}</p>
           </div>
-
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <div className="flex items-center gap-2">
-              <UserX className="h-4 w-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-900">Disabled</span>
+          <div className="bg-gray-50 p-2.5 rounded-lg">
+            <div className="flex items-center gap-1.5">
+              <UserX className="h-3.5 w-3.5 text-gray-600" />
+              <span className="text-xs font-medium text-gray-900">Disabled</span>
             </div>
-            <p className="text-2xl font-bold text-gray-600 mt-1">{stats.disabled}</p>
+            <p className="text-xl font-bold text-gray-600 mt-0.5">{stats.disabled}</p>
           </div>
-
-          <div className="bg-red-50 p-3 rounded-lg">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-red-600" />
-              <span className="text-sm font-medium text-red-900">Suspended</span>
+          <div className="bg-red-50 p-2.5 rounded-lg">
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5 text-red-600" />
+              <span className="text-xs font-medium text-red-900">Suspended</span>
             </div>
-            <p className="text-2xl font-bold text-red-600 mt-1">{stats.suspended}</p>
+            <p className="text-xl font-bold text-red-600 mt-0.5">{stats.suspended}</p>
           </div>
         </div>
       </CardHeader>
 
       <CardContent>
-        <MapComponent 
-          users={userData.data} 
-          onMarkerClick={setSelectedUser} 
-          geocodedAddresses={geocodedAddresses} 
-        />
+        {/* Map + Sidebar layout */}
+        <div className="flex gap-4 h-[480px]">
+          {/* Sidebar — Activated Areas */}
+          <div className="w-56 flex-shrink-0 flex flex-col">
+            <div className="flex items-center gap-2 mb-3">
+              <Navigation className="h-4 w-4 text-[#0A8791]" />
+              <h3 className="text-sm font-semibold text-gray-800">Activated Areas</h3>
+              <Badge variant="secondary" className="text-xs ml-auto">{serviceLocations.length}</Badge>
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-1.5 pr-1">
+              {/* "Show All" button */}
+              <button
+                onClick={() => {
+                  setActiveAreaName(null)
+                  // Zoom back to fit all user pins
+                  const validUsers = (userData?.data || []).filter(
+                    (u) => u.pickup_location && u.pickup_location._latitude && u.pickup_location._longitude
+                  )
+                  if (validUsers.length > 0) {
+                    const lats = validUsers.map((u) => u.pickup_location._latitude)
+                    const lngs = validUsers.map((u) => u.pickup_location._longitude)
+                    const centerLat = lats.reduce((s, l) => s + l, 0) / lats.length
+                    const centerLng = lngs.reduce((s, l) => s + l, 0) / lngs.length
+                    setFlyTarget({ center: [centerLat, centerLng], zoom: 7 })
+                    setFocusKey(`all-${Date.now()}`)
+                  }
+                }}
+                className={`w-full text-left px-3 py-2.5 rounded-lg transition-all duration-200 flex items-center gap-2 ${
+                  activeAreaName === null
+                    ? "bg-[#0A8791] text-white shadow-md"
+                    : "bg-gray-50 hover:bg-gray-100 text-gray-800"
+                }`}
+              >
+                <Users className={`h-4 w-4 flex-shrink-0 ${activeAreaName === null ? "text-white" : "text-[#0A8791]"}`} />
+                <span className="text-sm font-medium">All Areas</span>
+              </button>
+
+              {serviceLocations.map((loc) => (
+                <AreaItem
+                  key={loc.id}
+                  area={loc}
+                  isActive={activeAreaName === loc.city}
+                  onClick={() => handleAreaClick(loc)}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Map */}
+          <div className="flex-1">
+            <MapComponent
+              users={userData.data}
+              onMarkerClick={setSelectedUser}
+              geocodedAddresses={geocodedAddresses}
+              flyTarget={flyTarget}
+              focusKey={focusKey}
+            />
+          </div>
+        </div>
 
         {/* User Details Modal */}
         {selectedUser && (

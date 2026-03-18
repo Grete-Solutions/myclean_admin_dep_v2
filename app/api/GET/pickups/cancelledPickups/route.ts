@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
   const backendData = await res.json();
   
-  const transformedData = (backendData.data || []).map((item: any) => {
+  const transformedData = (backendData.data || []).map((item: Record<string, unknown>) => {
     let createdAt = item.createdAt;
     if (typeof item.createdAt === 'string') {
       const date = new Date(item.createdAt);

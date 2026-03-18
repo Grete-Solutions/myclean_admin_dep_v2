@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     let pickupsData = { data: [] };
     if (pickupsResponse.ok) {
       const backendPickups = await pickupsResponse.json();
-      const transformedPickups = (backendPickups.data || []).map((item: any) => {
+      const transformedPickups = (backendPickups.data || []).map((item: Record<string, unknown>) => {
         let createdAt = item.createdAt;
         if (typeof item.createdAt === 'string') {
           const date = new Date(item.createdAt);
