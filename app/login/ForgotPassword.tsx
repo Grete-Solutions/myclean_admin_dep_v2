@@ -28,7 +28,7 @@ function ForgotPassword() {
     setLoading(true);
 
     try {
-      const response = await fetch('https://myclean-backend-v2-775492522781.europe-west1.run.app/admin/auth/forgot-password', {
+      const response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

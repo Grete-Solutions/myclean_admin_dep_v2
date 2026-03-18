@@ -5,7 +5,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    const response = await fetch('https://myclean-backend-v2-775492522781.europe-west1.run.app/admin/auth/forgot-password', {
+    const response = await fetch(`${process.env.URLB}/admin/auth/forgot-password`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

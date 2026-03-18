@@ -1,29 +1,31 @@
 'use client';
 import { Suspense } from 'react';
 import { Input } from '@/components/ui/input';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import React, { useRef, useCallback, useState, useEffect } from 'react';
 import { toast } from "sonner";
 import { useDispatch } from 'react-redux';
-import { setToken, setRefreshToken } from '@/utils/tokenSlice'; // Updated import
+import { setToken, setRefreshToken } from '@/utils/tokenSlice';
 import { signIn } from 'next-auth/react';
 
 const OtpPage = () => {
   const [email, setEmail] = useState('');
   const [Otp, setOtp] = useState(new Array(6).fill(''));
   const inputRefs = useRef<HTMLInputElement[]>([]);
-  const param = useSearchParams();
-  const emailFromParams = param.get('email');
   const router = useRouter();
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
-    if (emailFromParams) {
-      setEmail(emailFromParams);
+    const storedEmail = sessionStorage.getItem('pendingLoginEmail');
+    if (storedEmail) {
+      setEmail(storedEmail);
+    } else {
+      // No pending login session — redirect back to login
+      router.replace('/login');
     }
-  }, [emailFromParams]);
+  }, [router]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -86,13 +88,7 @@ const OtpPage = () => {
         refreshToken, // Pass the refreshToken to NextAuth
       });
 
-      console.log('Items',  
-        email,
-        password,
-        idToken,
-        refreshToken
-      )
-      
+
       if (result?.error) {
         throw new Error(result.error || 'Authentication failed');
       }

@@ -52,7 +52,7 @@ function Login() {
       }
       
       toast.success('OTP sent to your email');
-      router.push(`/login/otp?email=${encodeURIComponent(email)}`);
+      router.push('/login/otp');
       
     } catch (error) {
       console.error('Error during login attempt:', error);

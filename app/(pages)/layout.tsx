@@ -12,14 +12,14 @@ export default function Layout({
   children: React.ReactNode;
 }>) {
   return (
-    <>
+    <div className="flex h-screen w-full overflow-hidden">
       <Sidebar/>
-      <main className="flex flex-col  w-full h-full max-h-screen overflow-hidden">
+      <main className="flex flex-col flex-1 w-full h-full max-h-screen overflow-hidden">
       <Navbar/>
         <ScrollArea  className="h-full ">
         <PageWrapper>{children}</PageWrapper>
         </ScrollArea>
       </main>
-    </>
+    </div>
   );
 }

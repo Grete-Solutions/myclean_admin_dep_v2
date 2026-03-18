@@ -35,9 +35,8 @@ import { NextAuthOptions } from "next-auth";
         }
 
         try {
-          console.log("Fetching user from backend... with id token", token);
           const resUser = await fetch(
-            `https://myclean-backend-v2-775492522781.europe-west1.run.app/admin/get?email=${credentials.email}`,
+            `${process.env.URLB}/admin/get?email=${credentials.email}`,
             {
               method: "GET",
               headers: {
@@ -47,10 +46,7 @@ import { NextAuthOptions } from "next-auth";
             }
           );
 
-          console.log("Response status:", resUser.status);
-
           const response = await resUser.json();
-          console.log("Fetched user data:", response);
 
           if (!response.success || !response.data || response.data.length === 0) {
             console.error("User not found or is deactivated/suspended.");
